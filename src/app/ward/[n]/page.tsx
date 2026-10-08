@@ -30,6 +30,7 @@ export default async function WardPage({ params }: { params: Promise<{ n: string
     <div className="space-y-5">
       <header>
         <h1 className="text-3xl">{t('ward.title', { n: ward.wardNumber })}{ward.name ? ` · ${ward.name}` : ''}</h1>
+        {ward.area && <p className="mt-1 max-w-2xl">{ward.area}</p>}
         {ward.zone && <p className="text-muted">{t(`zone.${ward.zone}`)}</p>}
       </header>
 
@@ -53,7 +54,7 @@ export default async function WardPage({ params }: { params: Promise<{ n: string
               className="h-56"
             />
           )}
-          <Link href={`/map?ward=${ward.wardNumber}`} className="text-sm font-semibold text-laterite-dark underline">{t('ward.seeMap')}</Link>
+          <Link href={`/map?ward=${ward.wardNumber}`} className="text-sm font-semibold text-jharna-dark underline">{t('ward.seeMap')}</Link>
         </div>
       </div>
 
@@ -63,7 +64,7 @@ export default async function WardPage({ params }: { params: Promise<{ n: string
           <p className="card p-6 text-center text-muted">{t('ward.none')}</p>
         ) : (
           <ul className="grid gap-2 md:grid-cols-2">
-            {reports.map((r) => <li key={r.id}><ReportCard r={r} /></li>)}
+            {reports.map((r) => <li key={r.id} className="min-w-0"><ReportCard r={r} /></li>)}
           </ul>
         )}
       </section>

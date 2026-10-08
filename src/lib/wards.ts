@@ -7,6 +7,8 @@ export type Ward = {
   wardNumber: number;
   zone: Zone | null;
   name: string | null;
+  /** Full area description from the 2026 RMC ward member list. */
+  area?: string | null;
   councillorName: string | null;
   councillorPhone: string | null;
   lat: number | null;

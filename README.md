@@ -31,8 +31,8 @@ Other scripts: `npm run seed` (replace demo data), `npm run build && npm start` 
 ## Updating ward and official data
 
 All of it lives in **`data/wards.json`**: `meta` (helpline, map centre), `rmcOfficials` (Mayor, Deputy Mayor, Commissioner, health officer) and `wards`.
-Edit by hand; changes are picked up without a rebuild when the file is on disk. Ward fields: `wardNumber, zone, name, councillorName, councillorPhone, lat, lng, centroidSource, source, verified`.
-Set `verified: true` only after checking an official source; until then the UI shows a "Data not yet verified" badge. Wards with `placeholder: true` (54, 55) are hidden.
+Edit by hand; changes are picked up without a rebuild when the file is on disk. Ward fields: `wardNumber, zone, name, area, councillorName, councillorPhone, lat, lng, centroidSource, source, verified`.
+Set `verified: true` only after checking an official source; until then the UI shows a "Data not yet verified" badge. Councillors, phones and areas come from the 2026 RMC ward member list (53 wards); each ward also has an `area` field with the full area description.
 See **`DATA_TODO.md`** for exactly what is unverified or missing.
 
 **Ward boundaries (optional, recommended):** drop a GeoJSON `FeatureCollection` at `data/ward-boundaries.geojson`; each feature needs a `Polygon`/`MultiPolygon` geometry and `properties.wardNumber` (also accepts `ward`, `WARD_NO`, `Ward_No`). Detection then uses point-in-polygon and falls back to nearest centroid outside any polygon.
