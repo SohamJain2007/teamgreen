@@ -1,10 +1,12 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getT } from '@/lib/lang-server';
 import { computeStats, listPublic } from '@/lib/reports';
 import { getWard, getWardFile } from '@/lib/wards';
 import { fmtNum } from '@/lib/format';
 import { ReportCard, Stat } from '@/components/ui';
-import { RanchiSkyline, SalLeaf } from '@/components/Ranchi';
+import { SalLeaf } from '@/components/Ranchi';
+import { GALLERY, PHOTOS, type Photo } from '@/lib/photos';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,20 +19,22 @@ export default async function Home() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-b from-jharna-soft via-sal-soft/60 to-white">
-        <div className="relative z-[1] px-5 pb-28 pt-8 sm:pb-40 md:px-10 md:pb-64 md:pt-12">
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-sal-dark ring-1 ring-sal/15">
-            <SalLeaf size={14} className="text-sal" />
+      <section className="relative overflow-hidden rounded-3xl bg-ink text-white">
+        <Image src={PHOTOS.hundru.src} alt={t(PHOTOS.hundru.place)} fill priority sizes="(min-width: 1024px) 1024px, 100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/60 to-ink/20 md:bg-gradient-to-r md:from-ink/85 md:via-ink/50 md:to-transparent" />
+        <div className="relative z-[1] px-5 pb-12 pt-28 md:px-10 md:py-20">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/25 backdrop-blur">
+            <SalLeaf size={14} className="text-sal-soft" />
             {t('home.kicker')}
           </p>
           <h1 className="mt-4 max-w-2xl text-3xl leading-tight md:text-5xl">{t('home.title')}</h1>
-          <p className="mt-3 max-w-xl text-lg text-muted">{t('home.sub')}</p>
+          <p className="mt-3 max-w-xl text-lg text-white/85">{t('home.sub')}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/report" className="btn-primary !text-lg">{t('home.cta')}</Link>
-            <Link href="/map" className="btn-ghost">{t('home.viewMap')}</Link>
+            <Link href="/map" className="btn border border-white/50 text-white backdrop-blur hover:bg-white/10">{t('home.viewMap')}</Link>
           </div>
         </div>
-        <RanchiSkyline className="absolute inset-x-0 bottom-0 h-auto w-full" />
+        <Credit photo={PHOTOS.hundru} label={`${t(PHOTOS.hundru.place)} · ${t('photo.by', { name: PHOTOS.hundru.artist, license: PHOTOS.hundru.license })}`} />
       </section>
 
       <section className="grid grid-cols-3 gap-2">
@@ -56,10 +60,43 @@ export default async function Home() {
       </section>
 
       <section>
+        <h2 className="section-title">{t('gallery.title')}</h2>
+        <p className="mb-3 mt-1 text-muted">{t('gallery.sub')}</p>
+        <ul className="grid auto-rows-[150px] grid-cols-2 gap-2 sm:auto-rows-[190px] md:grid-cols-3 md:gap-3 md:auto-rows-[210px]">
+          {GALLERY.map((ph, i) => (
+            <li
+              key={ph.slug}
+              className={`group relative overflow-hidden rounded-2xl bg-line ${i === 0 ? 'col-span-2 row-span-2' : ''} ${i === GALLERY.length - 1 ? 'col-span-2 md:col-span-1' : ''}`}
+            >
+              <Image
+                src={ph.src}
+                alt={t(ph.place)}
+                fill
+                sizes={i === 0 ? '(min-width: 768px) 680px, 100vw' : '(min-width: 768px) 340px, 50vw'}
+                className="object-cover transition duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-transparent to-transparent" />
+              <p className="absolute bottom-2 left-3 right-3 font-display text-sm text-white md:text-base">{t(ph.place)}</p>
+              <Credit photo={ph} label={t('photo.by', { name: ph.artist, license: ph.license })} top />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
         <div className="mb-3 flex items-end justify-between">
           <h2 className="section-title">{t('home.recent')}</h2>
           <Link href="/map" className="text-sm font-semibold text-jharna-dark underline">{t('home.viewMap')}</Link>
         </div>
+        {reports.length === 0 && (
+          <div className="card flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-display text-lg">{t('home.empty.t')}</p>
+              <p className="text-sm text-muted">{t('home.empty.d')}</p>
+            </div>
+            <Link href="/report" className="btn-primary">{t('home.cta')}</Link>
+          </div>
+        )}
         <ul className="grid gap-2 md:grid-cols-2">
           {reports.slice(0, 6).map((r) => (
             <li key={r.id} className="min-w-0"><ReportCard r={r} wardName={r.ward != null ? getWard(r.ward)?.name : null} /></li>
@@ -67,17 +104,32 @@ export default async function Home() {
         </ul>
       </section>
 
-      <section className="relative overflow-hidden rounded-3xl bg-jharna-dark px-5 py-7 text-white md:px-10">
-        <svg viewBox="0 0 200 120" className="absolute -right-6 bottom-0 h-full w-48 opacity-30 md:w-64" aria-hidden="true">
-          <path d="M70 0 C76 40 72 80 64 120 H112 C104 80 100 40 106 0Z" fill="#FFFFFF" />
-          <path d="M82 10 v90 M92 6 v104 M100 12 v80" stroke="#BFE6EA" strokeWidth="3" strokeLinecap="round" />
-        </svg>
-        <h2 className="relative text-2xl">{t('home.pledge.t')}</h2>
-        <p className="relative mt-2 max-w-xl text-white/85">{t('home.pledge.d')}</p>
-        <Link href="/report" className="btn relative mt-5 bg-white text-jharna-dark hover:bg-jharna-soft">{t('home.cta')}</Link>
+      <section className="relative overflow-hidden rounded-3xl bg-jharna-dark px-5 py-10 text-white md:px-10 md:py-14">
+        <Image src={PHOTOS.lake.src} alt={t(PHOTOS.lake.place)} fill sizes="(min-width: 1024px) 1024px, 100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-jharna-dark/95 via-jharna-dark/70 to-jharna-dark/10" />
+        <div className="relative max-w-xl">
+          <h2 className="text-2xl md:text-3xl">{t('home.pledge.t')}</h2>
+          <p className="mt-2 text-white/85">{t('home.pledge.d')}</p>
+          <Link href="/report" className="btn mt-5 bg-white text-jharna-dark hover:bg-jharna-soft">{t('home.cta')}</Link>
+        </div>
+        <Credit photo={PHOTOS.lake} label={`${t(PHOTOS.lake.place)} · ${t('photo.by', { name: PHOTOS.lake.artist, license: PHOTOS.lake.license })}`} />
       </section>
 
       <p className="text-sm text-muted">{t('alsoRmc')}: <a href={`tel:${helpline}`} className="font-semibold underline">{helpline}</a></p>
     </div>
+  );
+}
+
+/** Small attribution link required by the photos' CC licences. */
+function Credit({ photo, label, top = false }: { photo: Photo; label: string; top?: boolean }) {
+  return (
+    <a
+      href={photo.page}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`absolute right-2 z-[1] max-w-[85%] truncate rounded bg-black/35 px-1.5 py-0.5 text-[10px] text-white/85 hover:text-white ${top ? 'top-2' : 'bottom-2'}`}
+    >
+      {label}
+    </a>
   );
 }

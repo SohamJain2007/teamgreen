@@ -6,7 +6,8 @@ import { translate } from '@/lib/translations';
 import { LangProvider } from '@/components/I18n';
 import { BottomNav, Header } from '@/components/Nav';
 import SWRegister from '@/components/SWRegister';
-import { SohraiBand } from '@/components/Ranchi';
+import Link from 'next/link';
+import { RanchiSkyline, SohraiBand } from '@/components/Ranchi';
 
 // Mukta: friendly Devanagari + Latin text face. Poppins: clean geometric headline face that also covers Devanagari.
 const body = Mukta({ subsets: ['latin', 'devanagari'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
@@ -32,12 +33,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LangProvider lang={lang}>
           <Header />
           <main className="mx-auto max-w-5xl px-4 py-5">{children}</main>
-          <footer className="mt-6 border-t border-line bg-white">
+          <div className="mx-auto mt-8 max-w-5xl px-4">
+            <RanchiSkyline className="block h-auto w-full" />
+          </div>
+          <footer className="border-t border-line bg-white">
             <SohraiBand className="block h-1.5" />
             <div className="mx-auto max-w-5xl px-4 pb-8 pt-5 text-xs text-muted">
               <p className="font-display text-sm text-sal-dark">{translate(lang, 'footer.made')}</p>
               <p className="mt-2">{translate(lang, 'disclaimer')}</p>
-              <p className="mt-1">© OpenStreetMap contributors</p>
+              <p className="mt-1">
+                © OpenStreetMap contributors ·{' '}
+                <Link href="/credits" className="underline hover:text-ink">{translate(lang, 'footer.credits')}</Link>
+              </p>
             </div>
           </footer>
           <BottomNav />
