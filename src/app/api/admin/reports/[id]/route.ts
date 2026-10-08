@@ -2,7 +2,8 @@ import { json, fail } from '@/lib/api';
 import { isAdmin } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { processPhoto } from '@/lib/image';
-import { deleteReport, getReport } from '@/lib/reports';
+import { addEvent, deleteReport, getReport, markCleared, maybeVerify, reopen } from '@/lib/reports';
+import { enqueueForReport, retryFailed } from '@/lib/notify';
 import { getStorage } from '@/lib/storage';
 import { MAX_UPLOAD_BYTES } from '@/lib/constants';
 
@@ -22,6 +23,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   switch (action) {
     case 'acknowledge':
       db.prepare("UPDATE reports SET status='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?), cleared_at=NULL WHERE id=?").run(now, id);
+      addEvent(id, 'acknowledged', 'admin');
       break;
     case 'clear': {
       const after = form.get('after');
@@ -35,18 +37,21 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         }
         const st = getStorage();
         const stamp = Date.now().toString(36);
-        const key = `${id}_a${stamp}.jpg`;
-        const tkey = `${id}_a${stamp}_t.jpg`;
-        await st.put(key, p.full);
-        await st.put(tkey, p.thumb);
-        db.prepare('UPDATE reports SET after_photo=?, after_thumb=? WHERE id=?').run(key, tkey, id);
-      }
-      // Acknowledged timestamp is back-filled so the timeline never shows Cleared without Acknowledged.
-      db.prepare("UPDATE reports SET status='cleared', cleared_at=?, acknowledged_at=COALESCE(acknowledged_at, ?) WHERE id=?").run(now, now, id);
+        const keys = { photo: `${id}_a${stamp}.jpg`, thumb: `${id}_a${stamp}_t.jpg` };
+        await st.put(keys.photo, p.full);
+        await st.put(keys.thumb, p.thumb);
+        markCleared(id, 'admin', keys);
+      } else markCleared(id, 'admin');
       break;
     }
     case 'reopen':
-      db.prepare("UPDATE reports SET status='reported', acknowledged_at=NULL, cleared_at=NULL WHERE id=?").run(id);
+      reopen(id, 'admin');
+      break;
+    case 'verify':
+      if (maybeVerify(id, 0, true)) enqueueForReport(id);
+      break;
+    case 'retry':
+      retryFailed(id);
       break;
     case 'hide':
       db.prepare('UPDATE reports SET hidden=1 WHERE id=?').run(id);

@@ -35,7 +35,9 @@ export function AdminLogin({ disabled }: { disabled: boolean }) {
   );
 }
 
-export default function AdminPanel({ reports }: { reports: Report[] }) {
+type Delivery = { channel: string; status: string; error: string | null };
+
+export default function AdminPanel({ reports, deliveries, mode, needed }: { reports: Report[]; deliveries: Record<string, Delivery[]>; mode: string; needed: number }) {
   const { t, lang } = useI18n();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('open');
@@ -76,6 +78,9 @@ export default function AdminPanel({ reports }: { reports: Report[] }) {
           </button>
         </div>
       </div>
+      <p className={`rounded-xl p-3 text-sm font-semibold ${mode === 'live' ? 'bg-sal-soft text-sal-dark' : 'bg-haldi-soft text-haldi-text'}`}>
+        {t(mode === 'live' ? 'admin.mode.live' : mode === 'dry-run' ? 'admin.mode.dry' : 'admin.mode.off')}
+      </p>
       <div className="flex flex-wrap gap-2" role="tablist">
         {(['open', 'flagged', 'cleared', 'all'] as const).map((k) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`chip ${tab === k ? 'chip-on' : ''}`}>
@@ -103,9 +108,19 @@ export default function AdminPanel({ reports }: { reports: Report[] }) {
                   {fmtAgo(r.createdAt, lang)} · {t('r.daysOpen', { n: daysBetween(r.createdAt, r.clearedAt ?? Date.now()) })} · 👥 {r.upvotes}
                 </p>
                 {r.note && <p className="truncate text-sm">{r.note}</p>}
+                <p className="text-xs">
+                  {r.verifiedAt ? <span className="font-semibold text-jharna-dark">✓ {t('step.verified')}</span> : <span className="text-muted">{t('r.confirmProgress', { n: Math.max(0, r.upvotes - 1), m: needed })}</span>}
+                  {(deliveries[r.id] ?? []).map((d, i) => (
+                    <span key={i} title={d.error ?? ''} className={`ml-2 rounded px-1.5 py-0.5 font-semibold ${d.status === 'sent' ? 'bg-sal-soft text-sal-dark' : d.status === 'failed' || d.status === 'skipped' ? 'bg-palash-soft text-palash-dark' : 'bg-haldi-soft text-haldi-text'}`}>
+                      {d.channel}: {d.status}{d.error ? ` (${d.error.slice(0, 60)})` : ''}
+                    </span>
+                  ))}
+                </p>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {!r.verifiedAt && !r.hidden && <button disabled={busy === r.id} onClick={() => act(r.id, 'verify')} className="btn-ghost !min-h-[40px] !py-1.5">{t('admin.verify')}</button>}
+              {(deliveries[r.id] ?? []).some((d) => d.status === 'failed') && <button disabled={busy === r.id} onClick={() => act(r.id, 'retry')} className="btn-ghost !min-h-[40px] !py-1.5">{t('admin.retry')}</button>}
               {r.status === 'reported' && <button disabled={busy === r.id} onClick={() => act(r.id, 'acknowledge')} className="btn-ghost !min-h-[40px] !py-1.5">{t('admin.ack')}</button>}
               {r.status !== 'cleared' && (
                 <form

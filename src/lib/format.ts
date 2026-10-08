@@ -27,3 +27,14 @@ export const fmtNum = (n: number | null, digits = 1) => (n == null ? '—' : n.t
 
 /** Public URL for a stored photo key. Matches LocalStorage.url(); change here if photos move to a CDN. */
 export const photoUrl = (key: string) => `/uploads/${key}`;
+
+/** Short human duration: "35 min", "6 h", "3 days" (Hindi: "35 मिनट", "6 घंटे", "3 दिन"). */
+export function fmtDuration(ms: number, lang: Lang): string {
+  const hi = lang === 'hi';
+  const mins = Math.max(0, Math.round(ms / 60000));
+  if (mins < 60) return `${mins} ${hi ? 'मिनट' : 'min'}`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return `${hrs} ${hi ? 'घंटे' : 'h'}`;
+  const days = Math.round(hrs / 24);
+  return `${days} ${hi ? 'दिन' : 'days'}`;
+}

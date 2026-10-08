@@ -31,3 +31,11 @@ export function pointInGeometry(lng: number, lat: number, geom: { type: string; 
   if (geom.type === 'MultiPolygon') return geom.coordinates.some((p: Ring[]) => inPolygon(lng, lat, p));
   return false;
 }
+
+/** Parses lat/lng from a request body and checks they are within `radiusM` of the target. */
+export function nearTo(target: { lat: number; lng: number }, lat: unknown, lng: unknown, radiusM: number): boolean {
+  const la = Number(lat);
+  const ln = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(ln)) return false;
+  return haversineM(la, ln, target.lat, target.lng) <= radiusM;
+}

@@ -1,5 +1,6 @@
 /**
- * Demo data seeder.  `npm run seed` replaces demo reports; `--if-empty` (used by predev) only seeds a brand-new DB.
+ * Demo data seeder for local development only: `npm run seed:demo` replaces demo reports. Never run it in production;
+ * `npm run demo:clear` removes them again.
  * Every row is inserted with is_demo = 1 and the UI flags it as DEMO. Photos are synthetic illustrations.
  */
 import sharp from 'sharp';

@@ -28,6 +28,9 @@ export type Report = {
   spamFlags: number;
   hidden: boolean;
   isDemo: boolean;
+  verifiedAt: number | null;
+  clearedBy: 'admin' | 'citizen' | null;
+  reopenFlags: number;
 };
 
 type Row = Record<string, any>;
@@ -53,6 +56,9 @@ const toReport = (r: Row): Report => ({
   spamFlags: r.spam_flags,
   hidden: !!r.hidden,
   isDemo: !!r.is_demo,
+  verifiedAt: r.verified_at ?? null,
+  clearedBy: r.cleared_by ?? null,
+  reopenFlags: r.reopen_flags ?? 0,
 });
 
 export const SPAM_HIDE_THRESHOLD = 3;
@@ -110,7 +116,7 @@ export function insertReport(r: {
     );
 }
 
-/** Returns the new count, or null if this client already voted. */
+/** Returns the new count, or null if this client already voted. Upvotes ("I see this too") are confirmations. */
 export function addVote(id: string, kind: 'up' | 'spam', client: string): number | null {
   const db = getDb();
   const tx = db.transaction(() => {
@@ -136,6 +142,8 @@ export async function deleteReport(id: string) {
   for (const k of [r.photo, r.thumb, r.afterPhoto, r.afterThumb]) if (k) await st.remove(k).catch(() => {});
   getDb().prepare('DELETE FROM reports WHERE id = ?').run(id);
   getDb().prepare('DELETE FROM votes WHERE report_id = ?').run(id);
+  getDb().prepare('DELETE FROM events WHERE report_id = ?').run(id);
+  getDb().prepare('DELETE FROM notifications WHERE report_id = ?').run(id);
 }
 
 // ---------- stats ----------
@@ -144,16 +152,33 @@ export type Stats = {
   open: number;
   cleared: number;
   avgDaysToClear: number | null;
+  /** Verified -> first official action (acknowledged or cleared by admin). */
+  avgDaysToRespond: number | null;
+  verified: number;
+  /** Average age in days of the spots that are still unresolved ("average wait time"). */
+  avgOpenDays: number | null;
   oldestOpen: Report | null;
 };
 const DAY = 86_400_000;
 
-export function computeStats(rs: Report[]): Stats {
+export function computeStats(rs: Report[], now = Date.now()): Stats {
   const open = rs.filter((r) => r.status !== 'cleared');
   const cleared = rs.filter((r) => r.status === 'cleared' && r.clearedAt);
   const avg = cleared.length ? cleared.reduce((s, r) => s + (r.clearedAt! - r.createdAt), 0) / cleared.length / DAY : null;
   const oldest = open.length ? open.reduce((a, b) => (a.createdAt <= b.createdAt ? a : b)) : null;
-  return { total: rs.length, open: open.length, cleared: cleared.length, avgDaysToClear: avg, oldestOpen: oldest };
+  const responded = rs
+    .filter((r) => r.verifiedAt != null)
+    .map((r) => {
+      const acted = [r.acknowledgedAt, r.clearedBy === 'admin' ? r.clearedAt : null].filter((x): x is number => x != null);
+      return acted.length ? Math.max(0, Math.min(...acted) - r.verifiedAt!) : null;
+    })
+    .filter((x): x is number => x != null);
+  const avgResp = responded.length ? responded.reduce((a, b) => a + b, 0) / responded.length / DAY : null;
+  return {
+    total: rs.length, open: open.length, cleared: cleared.length, avgDaysToClear: avg, avgDaysToRespond: avgResp,
+    verified: rs.filter((r) => r.verifiedAt != null).length, oldestOpen: oldest,
+    avgOpenDays: open.length ? open.reduce((sum, r) => sum + (now - r.createdAt), 0) / open.length / DAY : null,
+  };
 }
 
 export function wardStatsAll(rs: Report[]) {
@@ -169,4 +194,83 @@ export function zoneStatsAll(rs: Report[]) {
 
 export function zoneOf(wardNumber: number | null): Zone | null {
   return wardNumber == null ? null : (getWard(wardNumber)?.zone ?? null);
+}
+
+// ---------- events, verification, citizen clean-up ----------
+export type EventKind = 'reported' | 'confirmed' | 'verified' | 'notified' | 'acknowledged' | 'cleared' | 'still_dirty' | 'reopened';
+export type ReportEvent = { at: number; kind: EventKind; detail: string | null };
+
+export function addEvent(reportId: string, kind: EventKind, detail: string | null = null, at = Date.now()) {
+  getDb().prepare('INSERT INTO events (report_id, at, kind, detail) VALUES (?,?,?,?)').run(reportId, at, kind, detail);
+}
+export function listEvents(reportId: string): ReportEvent[] {
+  return getDb().prepare('SELECT at, kind, detail FROM events WHERE report_id = ? ORDER BY at, id').all(reportId) as ReportEvent[];
+}
+
+/** Confirmations = people other than the reporter (upvotes start at 1 for the reporter). */
+export const confirmations = (r: Report) => Math.max(0, r.upvotes - 1);
+
+/** Marks the report verified once it has enough confirmations. Returns true only on the transition. */
+export function maybeVerify(id: string, needed: number, force = false): boolean {
+  const res = getDb()
+    .prepare(`UPDATE reports SET verified_at = ? WHERE id = ? AND verified_at IS NULL AND hidden = 0 AND (? OR upvotes - 1 >= ?)`)
+    .run(Date.now(), id, force ? 1 : 0, needed);
+  if (res.changes === 0) return false;
+  addEvent(id, 'verified', force ? 'admin' : null);
+  return true;
+}
+
+export function markCleared(id: string, by: 'admin' | 'citizen', after?: { photo: string; thumb: string }) {
+  const db = getDb();
+  const now = Date.now();
+  if (after) db.prepare('UPDATE reports SET after_photo=?, after_thumb=? WHERE id=?').run(after.photo, after.thumb, id);
+  // Acknowledged timestamp is back-filled only for admin clears, so a citizen clean-up never fakes an official response.
+  db.prepare(
+    `UPDATE reports SET status='cleared', cleared_at=?, cleared_by=?, reopen_flags=0,
+       acknowledged_at = CASE WHEN ? = 'admin' THEN COALESCE(acknowledged_at, ?) ELSE acknowledged_at END WHERE id=?`,
+  ).run(now, by, by, now, id);
+  db.prepare("DELETE FROM votes WHERE report_id=? AND kind='dirty'").run(id);
+  addEvent(id, 'cleared', by);
+}
+
+/** "Still dirty" vote on a cleared report. Reopens it at the threshold. Returns null if already voted. */
+export function addStillDirty(id: string, client: string, threshold: number): { flags: number; reopened: boolean } | null {
+  const db = getDb();
+  return db.transaction(() => {
+    const ins = db.prepare("INSERT OR IGNORE INTO votes (report_id, kind, client, created_at) VALUES (?, 'dirty', ?, ?)").run(id, client, Date.now());
+    if (ins.changes === 0) return null;
+    db.prepare('UPDATE reports SET reopen_flags = reopen_flags + 1 WHERE id = ?').run(id);
+    const flags = (db.prepare('SELECT reopen_flags FROM reports WHERE id = ?').get(id) as Row).reopen_flags as number;
+    addEvent(id, 'still_dirty');
+    if (flags < threshold) return { flags, reopened: false };
+    reopen(id, 'citizens');
+    return { flags, reopened: true };
+  })();
+}
+
+export function reopen(id: string, by: string) {
+  const db = getDb();
+  db.prepare("UPDATE reports SET status='reported', cleared_at=NULL, cleared_by=NULL, reopen_flags=0 WHERE id=?").run(id);
+  db.prepare("DELETE FROM votes WHERE report_id=? AND kind='dirty'").run(id);
+  addEvent(id, 'reopened', by);
+}
+
+/** Deletes every demo report (and its photos). */
+export async function clearDemo(): Promise<number> {
+  const ids = (getDb().prepare('SELECT id FROM reports WHERE is_demo = 1').all() as Row[]).map((r) => r.id as string);
+  for (const id of ids) await deleteReport(id);
+  return ids.length;
+}
+
+// ---------- severity ----------
+export type Severity = 'critical' | 'moderate' | 'minor';
+/**
+ * How urgent an unresolved spot is, from how long it has been open, how many people have seen it and what it is.
+ * critical: open 30+ days, 6+ people, or burning waste / dead animal; moderate: open 7+ days, 3+ people, drain or debris.
+ */
+export function severity(r: Report, now = Date.now()): Severity {
+  const days = (now - r.createdAt) / DAY;
+  if (days >= 30 || r.upvotes >= 6 || r.category === 'burning' || r.category === 'dead_animal') return 'critical';
+  if (days >= 7 || r.upvotes >= 3 || r.category === 'drain' || r.category === 'construction') return 'moderate';
+  return 'minor';
 }

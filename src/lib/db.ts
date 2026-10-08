@@ -42,6 +42,31 @@ CREATE TABLE IF NOT EXISTS votes (
   PRIMARY KEY (report_id, kind, client)
 );
 
+-- Audit trail shown on the report timeline: reported, confirmed, verified, notified, acknowledged, cleared, reopened.
+CREATE TABLE IF NOT EXISTS events (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  report_id  TEXT NOT NULL,
+  at         INTEGER NOT NULL,
+  kind       TEXT NOT NULL,
+  detail     TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_events_report ON events(report_id, at);
+
+-- Outbox for complaints sent to officials (email to RMC, WhatsApp to councillor). One row per delivery.
+CREATE TABLE IF NOT EXISTS notifications (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  report_id  TEXT NOT NULL,
+  channel    TEXT NOT NULL,            -- email | whatsapp
+  recipient  TEXT NOT NULL,
+  status     TEXT NOT NULL,            -- pending | sent | dry_run | skipped | failed
+  error      TEXT,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  sent_at    INTEGER,
+  UNIQUE (report_id, channel, recipient)
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status);
+
 CREATE TABLE IF NOT EXISTS rate_limits (
   key      TEXT PRIMARY KEY,
   count    INTEGER NOT NULL,
@@ -58,7 +83,22 @@ export function getDb(): Database.Database {
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     db.exec(SCHEMA);
+    migrate(db);
     g.__safaiDb = db;
   }
   return g.__safaiDb;
+}
+
+/** Columns added after the first release. SQLite has no ADD COLUMN IF NOT EXISTS, so check table_info. */
+const ADDED_COLUMNS: [table: string, column: string, ddl: string][] = [
+  ['reports', 'verified_at', 'INTEGER'],          // set when enough people nearby confirm the spot
+  ['reports', 'cleared_by', 'TEXT'],              // admin | citizen
+  ['reports', 'reopen_flags', 'INTEGER NOT NULL DEFAULT 0'], // "still dirty" votes since the last clear
+];
+
+function migrate(db: Database.Database) {
+  for (const [table, column, ddl] of ADDED_COLUMNS) {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  }
 }

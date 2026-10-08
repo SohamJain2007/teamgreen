@@ -2,7 +2,7 @@ import { json, fail } from '@/lib/api';
 import { CATEGORIES, MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYTES, RANCHI_CENTRE, type Category } from '@/lib/constants';
 import { haversineM } from '@/lib/geo';
 import { processPhoto } from '@/lib/image';
-import { insertReport, newId } from '@/lib/reports';
+import { addEvent, insertReport, newId } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
 import { getStorage } from '@/lib/storage';
 import { getWard, resolveWard } from '@/lib/wards';
@@ -73,5 +73,6 @@ export async function POST(req: Request) {
     photo: photoKey,
     thumb: thumbKey,
   });
+  addEvent(id, 'reported');
   return json({ id });
 }

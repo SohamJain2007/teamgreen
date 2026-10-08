@@ -6,25 +6,12 @@ import LocationPicker from './LocationPicker';
 import { photoUrl } from '@/lib/format';
 import { CATEGORIES, type Category, type Status } from '@/lib/constants';
 import { StatusBadge } from './ui';
+import { compress } from '@/lib/client-media';
 
 type WardOpt = { n: number; name: string | null; zone: string | null };
 type Loc = { lat: number; lng: number; accuracy: number | null; source: 'gps' | 'pin' };
 type Nearby = { id: string; thumb: string; category: Category | null; status: Status; upvotes: number; distanceM: number };
 type WardRes = { ward: number | null; method: 'polygon' | 'centroid' | 'none' };
-
-async function compress(file: File): Promise<Blob> {
-  try {
-    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    const scale = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
-    const c = document.createElement('canvas');
-    c.width = Math.round(bmp.width * scale);
-    c.height = Math.round(bmp.height * scale);
-    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
-    return await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('blob'))), 'image/jpeg', 0.75));
-  } catch {
-    return file; // server re-encodes anyway
-  }
-}
 
 export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   const { t } = useI18n();
@@ -135,7 +122,12 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   async function addVoice(id: string) {
     setBusy(true);
     try {
-      await fetch(`/api/reports/${id}/upvote`, { method: 'POST' });
+      // The reporter is standing at the spot, so their location confirms it.
+      await fetch(`/api/reports/${id}/upvote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: loc?.lat, lng: loc?.lng }),
+      });
     } catch {}
     router.push(`/r/${id}?voted=1`);
   }
