@@ -5,7 +5,7 @@
       "phone": "1800-570-1235",
       "email": "support@ranchimunicipal.com",
       "source": "ranchimunicipal.com home page, fetched 2026-10-08",
-      "verified": false
+      "verified": true
     },
     "centre": {
       "lat": 23.3441,
@@ -18,24 +18,24 @@
       "title": "Mayor",
       "name": "Smt. Roshni Khalkho",
       "phone": "7903177237",
-      "source": "ranchimunicipal.com/docs/ElectedRepresentative.pdf (undated)",
-      "verified": false
+      "source": "ranchimunicipal.com/docs/ElectedRepresentative.pdf (undated); verified by project owner 2026-10-09",
+      "verified": true
     },
     {
       "role": "deputyMayor",
       "title": "Deputy Mayor",
       "name": "Shri Neeraj Kumar",
       "phone": "8797050007",
-      "source": "ranchimunicipal.com/docs/ElectedRepresentative.pdf (undated); same person/number listed as Ward 31 councillor",
-      "verified": false
+      "source": "ranchimunicipal.com/docs/ElectedRepresentative.pdf (undated); same person/number listed as Ward 31 councillor; verified by project owner 2026-10-09",
+      "verified": true
     },
     {
       "role": "commissioner",
       "title": "Municipal Commissioner / Administrator",
       "name": "Mr. Sushant Gaurav, IAS (listed as 'Administrator')",
       "phone": null,
-      "source": "ranchimunicipal.com home page, fetched 2026-10-08",
-      "verified": false
+      "source": "ranchimunicipal.com home page, fetched 2026-10-08; verified by project owner 2026-10-09",
+      "verified": true
     },
     {
       "role": "healthOfficer",
@@ -56,9 +56,10 @@
       "lat": 23.3903224,
       "lng": 85.3066573,
       "centroidSource": "approx: OSM Nominatim geocode of 'Gonda, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Kanke Road Gonda Town Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Kanke Road Gonda Town Area",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 2,
@@ -69,9 +70,10 @@
       "lat": 23.401721,
       "lng": 85.3174339,
       "centroidSource": "approx: OSM Nominatim geocode of 'Misir Gonda, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Misir Gonda Niche Basti Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Misir Gonda Niche Basti Area",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 3,
@@ -82,9 +84,10 @@
       "lat": 23.390876,
       "lng": 85.3278238,
       "centroidSource": "approx: OSM Nominatim geocode of 'Morabadi, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Sindwar Toli , Morabadi Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Sindwar Toli , Morabadi Area",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 4,
@@ -95,9 +98,10 @@
       "lat": 23.4072241,
       "lng": 85.3692777,
       "centroidSource": "approx: OSM Nominatim geocode of 'Bargain, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Bargain Dihwar Mohalla Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Bargain Dihwar Mohalla Area",
+      "assembly": "mla-khijri"
     },
     {
       "wardNumber": 5,
@@ -108,9 +112,10 @@
       "lat": 23.3954226,
       "lng": 85.3843646,
       "centroidSource": "approx: OSM Nominatim geocode of 'Booty, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Booty Basti and Surrounding Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Booty Basti and Surrounding Area",
+      "assembly": "mla-khijri"
     },
     {
       "wardNumber": 6,
@@ -121,9 +126,10 @@
       "lat": 23.3988017,
       "lng": 85.3945962,
       "centroidSource": "approx: OSM Nominatim geocode of 'Dipatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Gari Area , Bandhgari ,Akhara and Dipatoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Gari Area , Bandhgari ,Akhara and Dipatoli Area",
+      "assembly": "mla-khijri"
     },
     {
       "wardNumber": 7,
@@ -134,9 +140,10 @@
       "lat": 23.3782824,
       "lng": 85.3812933,
       "centroidSource": "approx: OSM Nominatim geocode of 'Hotwar, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Hotwar Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Hotwar Area",
+      "assembly": "mla-khijri"
     },
     {
       "wardNumber": 8,
@@ -147,9 +154,10 @@
       "lat": 23.3763325,
       "lng": 85.3579625,
       "centroidSource": "approx: OSM Nominatim geocode of locality name (not a ward boundary centroid) [2026 area not found by geocoder; old centroid kept]",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Purulia Road, Kantatoli Chowk, Parts Of Chutia, Mission road and Karbala Tank Road Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Purulia Road, Kantatoli Chowk, Parts Of Chutia, Mission road and Karbala Tank Road Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 9,
@@ -160,9 +168,10 @@
       "lat": 23.3943134,
       "lng": 85.3557156,
       "centroidSource": "approx: OSM Nominatim geocode of 'Jora Talab, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Covers Indraprasth Colony And near Jora Talab Locality"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Covers Indraprasth Colony And near Jora Talab Locality",
+      "assembly": "mla-khijri"
     },
     {
       "wardNumber": 10,
@@ -173,9 +182,10 @@
       "lat": 23.3853507,
       "lng": 85.3479123,
       "centroidSource": "approx: OSM Nominatim geocode of 'Tukitoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Tukitoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Tukitoli Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 11,
@@ -186,9 +196,10 @@
       "lat": 23.375328,
       "lng": 85.3384361,
       "centroidSource": "approx: OSM Nominatim geocode of 'Lalpur, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "J.C. Road Lalpur Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "J.C. Road Lalpur Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 12,
@@ -199,9 +210,10 @@
       "lat": 23.3604489,
       "lng": 85.3608406,
       "centroidSource": "approx: OSM Nominatim geocode of 'Lowadih, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Lowadih , Chutia Burning Ghat Road, Purulia Road, Dhumsa Toli"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Lowadih , Chutia Burning Ghat Road, Purulia Road, Dhumsa Toli",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 13,
@@ -212,9 +224,10 @@
       "lat": 23.3589821,
       "lng": 85.3547735,
       "centroidSource": "approx: OSM Nominatim geocode of 'Samlong, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Samlong, Bel Bagan, Namkum Area and Near Khadhada Bus Stand"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Samlong, Bel Bagan, Namkum Area and Near Khadhada Bus Stand",
+      "assembly": "mla-khijri"
     },
     {
       "wardNumber": 14,
@@ -225,9 +238,10 @@
       "lat": 23.3545206,
       "lng": 85.3394097,
       "centroidSource": "approx: OSM Nominatim geocode of 'Chutia, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Lower Chutia Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Lower Chutia Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 15,
@@ -238,9 +252,10 @@
       "lat": 23.3658192,
       "lng": 85.3364888,
       "centroidSource": "approx: OSM Nominatim geocode of locality name (not a ward boundary centroid) [2026 area not found by geocoder; old centroid kept]",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Dargah Islami Karbala Chowk Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Dargah Islami Karbala Chowk Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 16,
@@ -251,9 +266,10 @@
       "lat": 23.3658192,
       "lng": 85.3364888,
       "centroidSource": "approx: OSM Nominatim geocode of 'Konka, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Konka / Church Road Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Konka / Church Road Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 17,
@@ -264,9 +280,10 @@
       "lat": 23.3790318,
       "lng": 85.3144049,
       "centroidSource": "approx: OSM Nominatim geocode of 'Ratu Road, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Ratu Road(Shasrtri Chowk), Rani Sati mandir Road, Pahadi Mandir Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Ratu Road(Shasrtri Chowk), Rani Sati mandir Road, Pahadi Mandir Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 18,
@@ -277,9 +294,10 @@
       "lat": 23.378897,
       "lng": 85.332928,
       "centroidSource": "approx: OSM Nominatim geocode of 'Chadri, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Chadri Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Chadri Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 19,
@@ -290,9 +308,10 @@
       "lat": 23.3846571,
       "lng": 85.3307428,
       "centroidSource": "approx: OSM Nominatim geocode of 'Karamtoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Karamtoli, Nagratoli, SN Yadav Road, Deputy Para, Harihar Singh Road, Radium Road and Annapurna Chowk"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Karamtoli, Nagratoli, SN Yadav Road, Deputy Para, Harihar Singh Road, Radium Road and Annapurna Chowk",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 20,
@@ -303,9 +322,10 @@
       "lat": 23.378897,
       "lng": 85.332928,
       "centroidSource": "approx: OSM Nominatim geocode of locality name (not a ward boundary centroid) [2026 area not found by geocoder; old centroid kept]",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Tharpakhna Road, Lohra Kocha Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Tharpakhna Road, Lohra Kocha Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 21,
@@ -316,9 +336,10 @@
       "lat": 23.361536,
       "lng": 85.3126911,
       "centroidSource": "approx: OSM Nominatim geocode of 'Harmu, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Harmu Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Harmu Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 22,
@@ -329,9 +350,10 @@
       "lat": 23.362189,
       "lng": 85.3160506,
       "centroidSource": "approx: OSM Nominatim geocode of 'Hindpiri, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Hindpiri , Mojahid Nagar, Khet Mohalla Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Hindpiri , Mojahid Nagar, Khet Mohalla Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 23,
@@ -342,9 +364,10 @@
       "lat": 23.362189,
       "lng": 85.3160506,
       "centroidSource": "approx: OSM Nominatim geocode of 'Hindpiri, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Nala Road Hindpiri Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Nala Road Hindpiri Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 24,
@@ -355,9 +378,10 @@
       "lat": 23.3499133,
       "lng": 85.3136565,
       "centroidSource": "approx: OSM Nominatim geocode of 'Kadru, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Kadru Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Kadru Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 25,
@@ -368,9 +392,10 @@
       "lat": 23.3708396,
       "lng": 85.3005002,
       "centroidSource": "approx: OSM Nominatim geocode of 'Delatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Delabartoli, Associated With Areas Near Harmu River"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Delabartoli, Associated With Areas Near Harmu River",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 26,
@@ -381,9 +406,10 @@
       "lat": null,
       "lng": null,
       "centroidSource": "none: old geocode was ~16 km from the city centre (wrong) and the 2026 area was not found; choose this ward manually",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Tongritoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Tongritoli Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 27,
@@ -394,9 +420,10 @@
       "lat": 23.3728708,
       "lng": 85.2803931,
       "centroidSource": "approx: OSM Nominatim geocode of 'Nawatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Nawatoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Nawatoli Area",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 28,
@@ -407,9 +434,10 @@
       "lat": 23.3691849,
       "lng": 85.3070916,
       "centroidSource": "approx: OSM Nominatim geocode of 'Irgu Toli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Irgu Road, Kailash Nagar, And Harmu Road Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Irgu Road, Kailash Nagar, And Harmu Road Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 29,
@@ -420,9 +448,10 @@
       "lat": 23.3504514,
       "lng": 85.2466375,
       "centroidSource": "approx: OSM Nominatim geocode of 'Mahuatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Mahuatoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Mahuatoli Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 30,
@@ -433,9 +462,10 @@
       "lat": 23.3869103,
       "lng": 85.3052866,
       "centroidSource": "approx: OSM Nominatim geocode of 'Samsinghtoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Samsinghtoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Samsinghtoli Area",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 31,
@@ -446,9 +476,10 @@
       "lat": null,
       "lng": null,
       "centroidSource": "none: old geocode was ~17 km from the city centre (wrong) and the 2026 area was not found; choose this ward manually",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Hesal Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Hesal Area",
+      "assembly": "mla-ranchi"
     },
     {
       "wardNumber": 32,
@@ -459,9 +490,10 @@
       "lat": 23.3930574,
       "lng": 85.2889346,
       "centroidSource": "approx: OSM Nominatim geocode of 'Ambatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Ambatoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Ambatoli Area",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 33,
@@ -472,9 +504,10 @@
       "lat": 23.2698037,
       "lng": 85.3090498,
       "centroidSource": "approx: OSM Nominatim geocode of 'Tangratoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Tangaratoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Tangaratoli Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 34,
@@ -485,9 +518,10 @@
       "lat": 23.3718675,
       "lng": 85.2902408,
       "centroidSource": "approx: OSM Nominatim geocode of 'Pahartoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Pahartoli Area Along With Parts of Hehal And Harmu"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Pahartoli Area Along With Parts of Hehal And Harmu",
+      "assembly": "mla-kanke"
     },
     {
       "wardNumber": 35,
@@ -498,9 +532,10 @@
       "lat": 23.2698037,
       "lng": 85.3090498,
       "centroidSource": "approx: OSM Nominatim geocode of 'Tangratoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Tangratoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Tangratoli Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 36,
@@ -511,9 +546,10 @@
       "lat": 23.3504514,
       "lng": 85.2926682,
       "centroidSource": "approx: OSM Nominatim geocode of locality name (not a ward boundary centroid) [2026 area not found by geocoder; old centroid kept]",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Pragati Vihar, Dibadih Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Pragati Vihar, Dibadih Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 37,
@@ -524,9 +560,10 @@
       "lat": 23.3162794,
       "lng": 85.2861035,
       "centroidSource": "approx: OSM Nominatim geocode of locality name (not a ward boundary centroid) [2026 area not found by geocoder; old centroid kept]",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Jagarnathpur Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Jagarnathpur Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 38,
@@ -537,9 +574,10 @@
       "lat": 23.2849169,
       "lng": 85.2584864,
       "centroidSource": "approx: OSM Nominatim geocode of 'Dhurwa, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Durwa Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Durwa Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 39,
@@ -550,9 +588,10 @@
       "lat": 23.3930574,
       "lng": 85.2889346,
       "centroidSource": "approx: OSM Nominatim geocode of 'Ambatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Ambatoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Ambatoli Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 40,
@@ -563,9 +602,10 @@
       "lat": 23.2849169,
       "lng": 85.2584864,
       "centroidSource": "approx: OSM Nominatim geocode of 'Dhurwa, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Tunki Side Area Dhurwa"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Tunki Side Area Dhurwa",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 41,
@@ -576,9 +616,10 @@
       "lat": 23.3277523,
       "lng": 85.3035067,
       "centroidSource": "approx: OSM Nominatim geocode of 'HEC, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "HEC Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "HEC Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 42,
@@ -589,9 +630,10 @@
       "lat": 23.3276341,
       "lng": 85.3069161,
       "centroidSource": "approx: OSM Nominatim geocode of 'Bhusur, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Bhusur Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Bhusur Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 43,
@@ -602,9 +644,10 @@
       "lat": 23.3359705,
       "lng": 85.3250001,
       "centroidSource": "approx: OSM Nominatim geocode of 'Doranda, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Doranda Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Doranda Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 44,
@@ -615,9 +658,10 @@
       "lat": 23.3393498,
       "lng": 85.3151143,
       "centroidSource": "approx: OSM Nominatim geocode of 'Naditoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Naditoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Naditoli Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 45,
@@ -628,9 +672,10 @@
       "lat": 23.3359705,
       "lng": 85.3250001,
       "centroidSource": "approx: OSM Nominatim geocode of 'Doranda, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "New Parastoli, Darzi Muhalla Doranda Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "New Parastoli, Darzi Muhalla Doranda Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 46,
@@ -641,9 +686,10 @@
       "lat": 23.3358478,
       "lng": 85.3168523,
       "centroidSource": "approx: OSM Nominatim geocode of 'Parastoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Parsatoli, Chutia Power House Colony Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Parsatoli, Chutia Power House Colony Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 47,
@@ -654,9 +700,10 @@
       "lat": 23.3359705,
       "lng": 85.3250001,
       "centroidSource": "approx: OSM Nominatim geocode of 'Doranda, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Parts Of Doranda Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Parts Of Doranda Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 48,
@@ -667,9 +714,10 @@
       "lat": 23.3357645,
       "lng": 85.3350922,
       "centroidSource": "approx: OSM Nominatim geocode of 'Kusai Colony, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "kusai Colony, Doranda Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "kusai Colony, Doranda Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 49,
@@ -680,9 +728,10 @@
       "lat": 23.3262382,
       "lng": 85.3301145,
       "centroidSource": "approx: OSM Nominatim geocode of 'Pahantoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Pahantoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Pahantoli Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 50,
@@ -693,9 +742,10 @@
       "lat": 23.3320131,
       "lng": 85.3224219,
       "centroidSource": "approx: OSM Nominatim geocode of 'Hundru, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Hundru Basti ,Airport Road Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Hundru Basti ,Airport Road Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 51,
@@ -706,9 +756,10 @@
       "lat": 23.3022807,
       "lng": 85.3142407,
       "centroidSource": "approx: OSM Nominatim geocode of 'Singh More, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Singh More Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Singh More Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 52,
@@ -719,9 +770,10 @@
       "lat": 23.3094048,
       "lng": 85.3084951,
       "centroidSource": "approx: OSM Nominatim geocode of 'Hatia, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Hatia Area, Birsa Chowk, Oberia Road and Hesag Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Hatia Area, Birsa Chowk, Oberia Road and Hesag Area",
+      "assembly": "mla-hatia"
     },
     {
       "wardNumber": 53,
@@ -732,9 +784,79 @@
       "lat": 23.2687281,
       "lng": 85.2990974,
       "centroidSource": "approx: OSM Nominatim geocode of 'Kumbatoli, Ranchi' (from 2026 area list; not a ward boundary centroid)",
-      "source": "councillor+area: RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
-      "verified": false,
-      "area": "Kumbatoli Area"
+      "source": "councillor+area (verified by project owner 2026-10-09): RMC ward member list 2026.xlsx (provided by project owner, 2026-10-09); zone: smartranchi.in ZonewiseWardList (fetched 2026-10-08, may predate 2026 list)",
+      "verified": true,
+      "area": "Kumbatoli Area",
+      "assembly": "mla-hatia"
+    }
+  ],
+  "representatives": {
+    "source": "Wikipedia: Ranchi Lok Sabha constituency and Jharkhand 2024 assembly results (fetched 2026-10-09)",
+    "mp": {
+      "slug": "mp-ranchi",
+      "role": "MP",
+      "constituency": "Ranchi (Lok Sabha)",
+      "name": "Sanjay Seth",
+      "party": "BJP",
+      "phone": null
+    },
+    "mlas": [
+      {
+        "slug": "mla-ranchi",
+        "role": "MLA",
+        "constituency": "Ranchi",
+        "name": "C. P. Singh",
+        "party": "BJP",
+        "phone": null
+      },
+      {
+        "slug": "mla-hatia",
+        "role": "MLA",
+        "constituency": "Hatia",
+        "name": "Navin Jaiswal",
+        "party": "BJP",
+        "phone": null
+      },
+      {
+        "slug": "mla-kanke",
+        "role": "MLA",
+        "constituency": "Kanke (SC)",
+        "name": "Suresh Kumar Baitha",
+        "party": "INC",
+        "phone": null
+      },
+      {
+        "slug": "mla-khijri",
+        "role": "MLA",
+        "constituency": "Khijri (ST)",
+        "name": "Rajesh Kachhap",
+        "party": "INC",
+        "phone": null
+      }
+    ],
+    "assemblyMappingVerified": false,
+    "assemblyMappingNote": "DRAFT: wards were assigned to assembly seats by their 2026 area names (geography), not from an official delimitation list. Correct the \"assembly\" field on each ward, then set assemblyMappingVerified to true."
+  },
+  "officerChain": [
+    {
+      "role": "Municipal Commissioner",
+      "note": "Head of Ranchi Municipal Corporation · top of the chain",
+      "name": null
+    },
+    {
+      "role": "Deputy / Additional Municipal Commissioner",
+      "note": "Oversight of sanitation across zones",
+      "name": null
+    },
+    {
+      "role": "City Manager / Zonal Sanitation Officer",
+      "note": "Runs garbage collection in the zone",
+      "name": null
+    },
+    {
+      "role": "Sanitary Inspector / Ward Supervisor",
+      "note": "Frontline officer for the ward",
+      "name": null
     }
   ]
 }

@@ -3,10 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getT } from '@/lib/lang-server';
 import { computeStats, listPublic } from '@/lib/reports';
-import { getWard } from '@/lib/wards';
-import { daysBetween, fmtNum } from '@/lib/format';
-import { ReportCard, Stat } from '@/components/ui';
-import Officials from '@/components/Officials';
+import { assemblyMappingVerified, getMayor, getMp, getOfficerChain, getWard, mlaForWard } from '@/lib/wards';
+import { ReportCard } from '@/components/ui';
+import { AccountabilityChain, Avatar, StatTiles, SummaryBox, type Contact } from '@/components/Accountability';
+import ShareButton from '@/components/ShareButton';
 import MapView from '@/components/MapView';
 import { STATUSES, type Status } from '@/lib/constants';
 
@@ -24,26 +24,43 @@ export default async function WardPage({ params }: { params: Promise<{ n: string
   const { t } = await getT();
   const reports = listPublic().filter((r) => r.ward === ward.wardNumber);
   const s = computeStats(reports);
+  const mla = mlaForWard(ward);
+  const mp = getMp();
+  const mayor = getMayor();
+  const elected: Contact[] = [
+    ...(ward.councillorName ? [{ name: ward.councillorName, role: t('role.councillor'), phone: ward.councillorPhone, sub: t('ward.title', { n: ward.wardNumber }) }] : []),
+    ...(mla ? [{ name: mla.name, role: t('role.mla'), party: mla.party, phone: mla.phone, href: `/rep/${mla.slug}`, sub: mla.constituency }] : []),
+    ...(mp ? [{ name: mp.name, role: t('role.mp'), party: mp.party, phone: mp.phone, href: `/rep/${mp.slug}`, sub: 'Ranchi' }] : []),
+    ...(mayor ? [{ name: mayor.name, role: t('role.mayor'), phone: mayor.phone, href: '/rep/mayor', sub: 'RMC' }] : []),
+  ];
   const statusLabels = Object.fromEntries(STATUSES.map((x) => [x, t(`status.${x}`)])) as Record<Status, string>;
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-3xl">{t('ward.title', { n: ward.wardNumber })}{ward.name ? ` · ${ward.name}` : ''}</h1>
-        {ward.area && <p className="mt-1 max-w-2xl">{ward.area}</p>}
-        {ward.zone && <p className="text-muted">{t(`zone.${ward.zone}`)}</p>}
+      <header className="flex items-start gap-3">
+        {ward.councillorName && <Avatar name={ward.councillorName} size={60} />}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl md:text-3xl">{t('ward.title', { n: ward.wardNumber })}{ward.name ? ` · ${ward.name}` : ''}</h1>
+          {ward.councillorName && <p className="font-semibold">{ward.councillorName} <span className="font-normal text-muted">· {t('role.councillor')}</span></p>}
+          {ward.zone && <p className="text-sm text-muted">{t(`zone.${ward.zone}`)}</p>}
+        </div>
+        <ShareButton title={`Ward ${ward.wardNumber}, Ranchi: garbage record`} label={t('r.share')} copiedLabel={t('r.copied')} />
       </header>
+      {ward.area && <p className="max-w-2xl text-sm">{ward.area}</p>}
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <Stat label={t('ward.open')} value={s.open} />
-        <Stat label={t('ward.cleared')} value={s.cleared} />
-        <Stat label={t('ward.avgDays')} value={fmtNum(s.avgDaysToClear)} />
-        <Stat label={t('ward.oldest')} value={s.oldestOpen ? t('ward.oldestDays', { n: daysBetween(s.oldestOpen.createdAt, Date.now()) }) : '—'} />
-      </div>
+      <StatTiles t={t} s={s} />
+      <SummaryBox t={t} s={s} name={ward.councillorName ?? t('ward.title', { n: ward.wardNumber })} wardsWithOpen={1} />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-3">
-          <Officials ward={ward} />
+        <div className="space-y-2">
+          <h2 className="section-title">{t('acc.chain')}</h2>
+          <AccountabilityChain
+            t={t}
+            officers={getOfficerChain()}
+            elected={elected}
+            waText={`Garbage spots in Ward ${ward.wardNumber}${ward.name ? ` (${ward.name})` : ''}, Ranchi: ${s.open} unresolved. Details: ${process.env.NEXT_PUBLIC_SITE_URL || ''}/ward/${ward.wardNumber}`}
+            draftNote={mla && !assemblyMappingVerified() ? t('acc.draftMap') : null}
+          />
         </div>
         <div className="space-y-2">
           {reports.length > 0 && (

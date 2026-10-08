@@ -3,14 +3,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getT } from '@/lib/lang-server';
 import { isAdmin } from '@/lib/auth';
-import { getReport } from '@/lib/reports';
-import { getWard, getWardFile } from '@/lib/wards';
-import { daysBetween, fmtDate, fmtAgo, photoUrl } from '@/lib/format';
+import { getReport, listEvents, severity } from '@/lib/reports';
+import { complaintText, listNotifications, notifyMode } from '@/lib/notify';
+import { assemblyMappingVerified, getMayor, getMp, getOfficerChain, getWard, getWardFile, mlaForWard } from '@/lib/wards';
+import { daysBetween, fmtDate, fmtAgo, fmtDuration, photoUrl } from '@/lib/format';
 import { DemoBadge, StatusBadge } from '@/components/ui';
-import Officials from '@/components/Officials';
+import { AccountabilityChain, SEV_DOT, type Contact } from '@/components/Accountability';
+import ShareButton from '@/components/ShareButton';
 import ReportActions from '@/components/ReportActions';
 import MapView from '@/components/MapView';
-import { STATUSES, type Status } from '@/lib/constants';
+import { REOPEN_THRESHOLD, STATUSES, VERIFY_CONFIRMATIONS, VERIFY_RADIUS_M, type Status } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,13 +34,39 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const ward = r.ward != null ? getWard(r.ward) : undefined;
   const now = Date.now();
 
-  const reached: Record<Status, number | null> = { reported: r.createdAt, acknowledged: r.acknowledgedAt, cleared: r.clearedAt };
+  const events = listEvents(r.id);
+  const deliveries = listNotifications(r.id);
+  const firstSent = events.find((e) => e.kind === 'notified')?.at ?? null;
+  // Public journey of a complaint. "Sent" is the first successful (or test-mode) delivery to officials.
+  const steps: { key: string; label: string; at: number | null; color: string; note?: string }[] = [
+    { key: 'reported', label: t('status.reported'), at: r.createdAt, color: 'bg-palash' },
+    { key: 'verified', label: t('step.verified'), at: r.verifiedAt, color: 'bg-jharna' },
+    ...(notifyMode() !== 'off' || deliveries.length ? [{ key: 'sent', label: t('step.sent'), at: firstSent, color: 'bg-jharna' }] : []),
+    { key: 'acknowledged', label: t('status.acknowledged'), at: r.acknowledgedAt, color: 'bg-haldi' },
+    { key: 'cleared', label: t('status.cleared'), at: r.clearedAt, color: 'bg-sal', note: r.clearedBy === 'citizen' ? t('r.clearedByCitizen') : undefined },
+  ];
+  const sev = r.status === 'cleared' ? null : severity(r, now);
+  const mla = mlaForWard(ward);
+  const mp = getMp();
+  const mayor = getMayor();
+  const elected: Contact[] = [
+    ...(ward?.councillorName ? [{ name: ward.councillorName, role: t('role.councillor'), phone: ward.councillorPhone, href: `/ward/${ward.wardNumber}`, sub: t('ward.title', { n: ward.wardNumber }) }] : []),
+    ...(mla ? [{ name: mla.name, role: t('role.mla'), party: mla.party, phone: mla.phone, href: `/rep/${mla.slug}`, sub: mla.constituency }] : []),
+    ...(mp ? [{ name: mp.name, role: t('role.mp'), party: mp.party, phone: mp.phone, href: `/rep/${mp.slug}`, sub: 'Ranchi' }] : []),
+    ...(mayor ? [{ name: mayor.name, role: t('role.mayor'), phone: mayor.phone, href: '/rep/mayor', sub: 'RMC' }] : []),
+  ];
+  const daysOpen = daysBetween(r.createdAt, r.clearedAt ?? now);
+  const summary = [
+    t('bar.reported', { d: fmtAgo(r.createdAt, lang, now) }),
+    t('bar.seen', { n: r.upvotes }),
+    r.status === 'cleared' ? t('r.clearedIn', { n: daysOpen }) : t('bar.unresolved', { n: daysOpen }),
+  ].join(' · ');
   const statusLabels = Object.fromEntries(STATUSES.map((s) => [s, t(`status.${s}`)])) as Record<Status, string>;
   const gmaps = `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`;
   const helpline = getWardFile().meta.rmcHelpline.phone;
 
   return (
-    <article className="mx-auto max-w-2xl space-y-5">
+    <article className="mx-auto max-w-2xl space-y-5 pb-32">
       <Link href="/map" className="text-sm font-semibold text-jharna-dark underline">← {t('nav.map')}</Link>
 
       {sp.new && <p className="rounded-2xl bg-sal-soft p-3 font-semibold text-sal-dark" role="status">{t('r.new')}</p>}
@@ -46,8 +74,22 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       {r.hidden && <p className="rounded-2xl bg-palash-soft p-3 font-semibold text-palash-dark">{t('r.hiddenNote')}</p>}
 
       <header className="space-y-2">
+        <div className="flex items-center gap-2">
+          <p className="flex flex-1 items-center gap-2 text-sm font-bold uppercase tracking-wide">
+            {sev ? (
+              <>
+                <span className={`h-2.5 w-2.5 rounded-full ${SEV_DOT[sev]}`} aria-hidden="true" />
+                {t(`sev.${sev}`)} <span className="text-muted">·</span> <span className="text-palash-dark">{t('sev.unresolved')}</span>
+              </>
+            ) : (
+              <><span className="h-2.5 w-2.5 rounded-full bg-sal" aria-hidden="true" /><span className="text-sal-dark">{t('sev.resolved')}</span></>
+            )}
+          </p>
+          <ShareButton title={`Garbage spot #${r.id}, Ranchi`} label={t('r.share')} copiedLabel={t('r.copied')} />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={r.status} />
+          {r.verifiedAt && <span className="rounded-full bg-jharna-soft px-2.5 py-1 text-xs font-bold text-jharna-dark">✓ {t('step.verified')}</span>}
           {r.isDemo && <DemoBadge />}
           <span className="font-mono text-xs text-muted">#{r.id}</span>
         </div>
@@ -84,26 +126,63 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       <section aria-labelledby="tl">
         <h2 id="tl" className="section-title mb-2">{t('r.timeline')}</h2>
         <ol className="card space-y-0 p-4">
-          {STATUSES.map((s, i) => {
-            const at = reached[s];
-            const done = at != null;
+          {steps.map((st, i) => {
+            const done = st.at != null;
+            const nextDone = steps[i + 1]?.at != null;
+            const prev = steps.slice(0, i).reverse().find((x) => x.at != null)?.at;
             return (
-              <li key={s} className="relative flex gap-3 pb-4 last:pb-0">
-                {i < STATUSES.length - 1 && <span className={`absolute left-[11px] top-6 h-[calc(100%-1.5rem)] w-0.5 ${reached[STATUSES[i + 1]] ? 'bg-ink' : 'bg-line'}`} />}
-                <span className={`z-[1] mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-white ${done ? (s === 'reported' ? 'bg-palash' : s === 'acknowledged' ? 'bg-haldi' : 'bg-sal') : 'bg-line text-muted'}`}>
+              <li key={st.key} className="relative flex gap-3 pb-4 last:pb-0">
+                {i < steps.length - 1 && <span className={`absolute left-[11px] top-6 h-[calc(100%-1.5rem)] w-0.5 ${nextDone ? 'bg-ink' : 'bg-line'}`} />}
+                <span className={`z-[1] mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-white ${done ? st.color : 'bg-line text-muted'}`}>
                   {done ? '✓' : ''}
                 </span>
                 <div>
-                  <p className={`font-semibold ${done ? '' : 'text-muted'}`}>{statusLabels[s]}</p>
-                  <p className="text-sm text-muted">{done ? fmtDate(at!, lang) : t('r.pending')}</p>
+                  <p className={`font-semibold ${done ? '' : 'text-muted'}`}>{st.label}</p>
+                  <p className="text-sm text-muted" suppressHydrationWarning>
+                    {done ? fmtDate(st.at!, lang) : st.key === 'verified' ? t('r.confirmProgress', { n: Math.min(Math.max(0, r.upvotes - 1), VERIFY_CONFIRMATIONS), m: VERIFY_CONFIRMATIONS }) : t('r.pending')}
+                    {done && prev != null && i > 0 ? ` · ${t('r.took', { n: fmtDuration(st.at! - prev, lang) })}` : ''}
+                  </p>
+                  {st.note && <p className="text-sm font-semibold text-sal-dark">{st.note}</p>}
                 </div>
               </li>
             );
           })}
         </ol>
+        {deliveries.length > 0 && (
+          <ul className="mt-2 space-y-1 text-sm">
+            {deliveries.map((d) => (
+              <li key={d.id} className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold">{t(d.channel === 'email' ? 'r.sent.email' : 'r.sent.whatsapp')}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${d.status === 'sent' ? 'bg-sal-soft text-sal-dark' : d.status === 'failed' || d.status === 'skipped' ? 'bg-palash-soft text-palash-dark' : 'bg-haldi-soft text-haldi-text'}`}>
+                  {t(`n.${d.status}` as Parameters<typeof t>[0])}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {notifyMode() !== 'off' && !r.verifiedAt && r.status !== 'cleared' && <p className="mt-2 text-sm text-muted">{t('r.notSentYet', { m: VERIFY_CONFIRMATIONS })}</p>}
+        {events.length > 0 && (
+          <details className="mt-2 text-sm">
+            <summary className="cursor-pointer font-semibold text-jharna-dark">{t('r.history')}</summary>
+            <ul className="mt-1 space-y-0.5 text-muted">
+              {events.map((e, i) => (
+                <li key={i} suppressHydrationWarning>{fmtDate(e.at, lang)} · {t(`ev.${e.kind}` as Parameters<typeof t>[0])}{e.detail ? ` (${e.detail})` : ''}</li>
+              ))}
+            </ul>
+          </details>
+        )}
       </section>
 
-      <ReportActions id={r.id} upvotes={r.upvotes} />
+      <ReportActions
+        id={r.id}
+        upvotes={r.upvotes}
+        status={r.status}
+        verified={r.verifiedAt != null}
+        needed={VERIFY_CONFIRMATIONS}
+        radiusM={VERIFY_RADIUS_M}
+        reopenThreshold={REOPEN_THRESHOLD}
+        summary={summary}
+      />
 
       <section aria-labelledby="loc">
         <h2 id="loc" className="section-title mb-2">{t('r.location')}</h2>
@@ -130,8 +209,14 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       </section>
 
       <section aria-labelledby="off">
-        <h2 id="off" className="section-title mb-2">{t('r.officials')}</h2>
-        <Officials ward={ward} />
+        <h2 id="off" className="section-title mb-2">{t('acc.chain')}</h2>
+        <AccountabilityChain
+          t={t}
+          officers={getOfficerChain()}
+          elected={elected}
+          waText={complaintText(r)}
+          draftNote={mla && !assemblyMappingVerified() ? t('acc.draftMap') : null}
+        />
         <p className="mt-2 text-xs text-muted">{t('alsoRmc')}: <a className="font-semibold underline" href={`tel:${helpline}`}>{helpline}</a></p>
       </section>
     </article>

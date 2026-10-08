@@ -1,5 +1,24 @@
 # DATA_TODO: what you need to verify or fill in
 
+> **2026-10-09:** the project owner confirmed the 2026 ward list (councillors, phones, areas), the Mayor/Deputy Mayor/Commissioner
+> entries and the helpline, so all of those are now `verified: true`. Items below about councillors/zones are kept for history.
+
+## Still open: which ward belongs to which MLA (DRAFT)
+
+`representatives` in `data/wards.json` lists the MP (Sanjay Seth, BJP, Ranchi Lok Sabha) and the four MLAs whose seats cover the
+city: Ranchi (C. P. Singh, BJP), Hatia (Navin Jaiswal, BJP), Kanke SC (Suresh Kumar Baitha, INC), Khijri ST (Rajesh Kachhap, INC),
+from Wikipedia's Ranchi Lok Sabha page and 2024 assembly results. **Each ward's `assembly` field was assigned by me from its area
+name, not from an official list**, so MLA panels show "not yet verified" until you fix it:
+
+- Kanke: 1, 2, 3, 27, 30, 32, 34
+- Khijri: 4, 5, 6, 7, 9, 13
+- Hatia: 24, 25, 29, 33, 35-53
+- Ranchi: every other ward (8, 10-12, 14-23, 26, 28, 31)
+
+Correct the `assembly` values (`mla-ranchi`, `mla-hatia`, `mla-kanke`, `mla-khijri`), add MLA/MP office phone numbers if you want
+"Call / WhatsApp" on their cards, then set `representatives.assemblyMappingVerified` to `true`.
+RMC officer names (`officerChain`) are roles only; add names when known.
+
 Everything in `data/wards.json` is marked `"verified": false`. The app shows a "Data not yet verified" badge next to every
 official until you flip that flag. **Nothing below has been checked by a human.**
 

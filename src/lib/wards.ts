@@ -17,6 +17,8 @@ export type Ward = {
   source: string;
   verified: boolean;
   placeholder?: boolean;
+  /** Slug of the MLA whose assembly seat contains this ward (see representatives.mlas). */
+  assembly?: string | null;
 };
 export type Official = {
   role: string;
@@ -26,9 +28,20 @@ export type Official = {
   source: string;
   verified: boolean;
 };
+export type Representative = {
+  slug: string;
+  role: 'MLA' | 'MP' | 'Mayor';
+  constituency: string;
+  name: string;
+  party: string | null;
+  phone: string | null;
+};
+export type OfficerRole = { role: string; note: string; name: string | null };
 type WardFile = {
   meta: { readme: string; rmcHelpline: { phone: string; email: string; verified: boolean }; centre: { lat: number; lng: number } };
   rmcOfficials: Official[];
+  representatives?: { source: string; mp: Representative; mlas: Representative[]; assemblyMappingVerified: boolean };
+  officerChain?: OfficerRole[];
   wards: Ward[];
 };
 type Boundary = { wardNumber: number; geometry: { type: string; coordinates: any } };
@@ -106,4 +119,39 @@ export function resolveWard(lat: number, lng: number): WardResolution {
     if (!best || d < best.d) best = { n: w.wardNumber, d };
   }
   return best ? { ward: best.n, method: 'centroid', distanceM: Math.round(best.d) } : { ward: null, method: 'none' };
+}
+
+// ---------- elected representatives above the ward ----------
+/** Mayor (from rmcOfficials) as a representative who answers for every ward. */
+function mayorRep(): Representative | undefined {
+  const m = load().rmcOfficials.find((o) => o.role === 'mayor');
+  return m?.name ? { slug: 'mayor', role: 'Mayor', constituency: 'Ranchi Municipal Corporation', name: m.name, party: null, phone: m.phone } : undefined;
+}
+export function getMayor(): Representative | undefined {
+  return mayorRep();
+}
+export function getRepresentatives(): Representative[] {
+  const r = load().representatives;
+  const mayor = mayorRep();
+  return [...(r ? [...r.mlas, r.mp] : []), ...(mayor ? [mayor] : [])];
+}
+export function getRep(slug: string): Representative | undefined {
+  return getRepresentatives().find((r) => r.slug === slug);
+}
+export function getMp(): Representative | undefined {
+  return load().representatives?.mp;
+}
+export function mlaForWard(w: Ward | undefined): Representative | undefined {
+  return w?.assembly ? load().representatives?.mlas.find((m) => m.slug === w.assembly) : undefined;
+}
+/** Wards a representative answers for: the MP covers every ward, an MLA the wards in their assembly seat. */
+export function wardsOfRep(rep: Representative): Ward[] {
+  return rep.role === 'MLA' ? getWards().filter((w) => w.assembly === rep.slug) : getWards();
+}
+/** False while the ward-to-assembly-seat mapping is still a draft. */
+export function assemblyMappingVerified(): boolean {
+  return load().representatives?.assemblyMappingVerified ?? false;
+}
+export function getOfficerChain(): OfficerRole[] {
+  return load().officerChain ?? [];
 }
