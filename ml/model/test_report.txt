@@ -1,0 +1,15 @@
+classes: ['dry', 'mixed', 'wet']
+
+              precision    recall  f1-score   support
+
+         dry      0.998     0.997     0.998      1453
+       mixed      0.995     1.000     0.997       198
+         wet      0.970     0.970     0.970        99
+
+    accuracy                          0.996      1750
+   macro avg      0.988     0.989     0.988      1750
+weighted avg      0.996     0.996     0.996      1750
+
+[[1449    1    3]
+ [   0  198    0]
+ [   3    0   96]]

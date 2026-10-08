@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-paper text-ink font-body antialiased; }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  :focus-visible { outline: 3px solid #1F1A17; outline-offset: 2px; }
+}
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition active:scale-[.98] disabled:opacity-50 min-h-[48px]; }
+  .btn-primary { @apply btn bg-laterite text-white hover:bg-laterite-dark; }
+  .btn-ghost { @apply btn border border-line bg-white text-ink hover:bg-paper; }
+  .card { @apply rounded-2xl border border-line bg-card shadow-[0_1px_0_rgba(31,26,23,.04)]; }
+  .chip { @apply inline-flex items-center rounded-full border border-line bg-white px-3 py-1.5 text-sm font-medium; }
+  .chip-on { @apply border-ink bg-ink text-white; }
+  .field { @apply w-full rounded-xl border border-line bg-white px-3 py-2.5 min-h-[44px]; }
+  .section-title { @apply flex items-center gap-2 text-xl; }
+  .section-title::before { content: ''; @apply inline-block h-3 w-3 rounded-sm bg-laterite; }
+}
+
+.leaflet-container { font-family: inherit; background: #e8e3d6; }
+.sr-pin { background: none; border: none; }
+.leaflet-popup-content { margin: 10px 12px; min-width: 160px; }
