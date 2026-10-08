@@ -25,6 +25,10 @@ const en = {
   'home.how.3.d': 'Everyone can follow the report: Reported, Acknowledged, Cleared, with before and after photos.',
   'home.recent': 'Latest reports',
   'home.demoNote': 'Demo data: the reports shown here are made-up examples, not real complaints.',
+  'home.kicker': 'Swachh Ranchi · City of Waterfalls',
+  'home.pledge.t': 'Keep the City of Waterfalls clean',
+  'home.pledge.d': 'From Pahari Mandir to Ranchi Lake, every spot you report stays on the public record until it is cleared.',
+  'footer.made': 'Made for Ranchi, the City of Waterfalls.',
   'disclaimer':
     'An independent citizen project. Not affiliated with Ranchi Municipal Corporation, and reports are not automatically forwarded to it.',
   'alsoRmc': 'To also reach RMC directly, call the helpline',
@@ -224,6 +228,10 @@ const hi: Dict = {
   'home.how.3.d': 'हर कोई रिपोर्ट देख सकता है: दर्ज, स्वीकार, साफ़, पहले और बाद की फ़ोटो के साथ।',
   'home.recent': 'ताज़ा रिपोर्ट',
   'home.demoNote': 'डेमो डेटा: यहाँ दिखाई गई रिपोर्टें काल्पनिक उदाहरण हैं, असली शिकायतें नहीं।',
+  'home.kicker': 'स्वच्छ राँची · झरनों का शहर',
+  'home.pledge.t': 'झरनों के शहर को साफ़ रखें',
+  'home.pledge.d': 'पहाड़ी मंदिर से राँची झील तक, आपकी हर रिपोर्ट उस जगह को तब तक सबके सामने रखती है जब तक वह साफ़ न हो जाए।',
+  'footer.made': 'झरनों के शहर राँची के लिए बनाया गया।',
   'disclaimer':
     'यह एक स्वतंत्र नागरिक परियोजना है। इसका रांची नगर निगम से कोई संबंध नहीं है, और रिपोर्टें अपने-आप निगम को नहीं भेजी जातीं।',
   'alsoRmc': 'निगम तक सीधे पहुँचने के लिए हेल्पलाइन पर कॉल करें',
