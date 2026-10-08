@@ -7,7 +7,7 @@ function PhoneLinks({ phone, label }: { phone: string; label: string }) {
   return (
     <span className="flex flex-wrap gap-x-3">
       {phone.split('/').map((p) => (
-        <a key={p} href={`tel:${p.trim()}`} className="font-semibold text-laterite-dark underline" aria-label={`${label} ${p}`}>
+        <a key={p} href={`tel:${p.trim()}`} className="font-semibold text-jharna-dark underline" aria-label={`${label} ${p}`}>
           {p.trim()}
         </a>
       ))}
@@ -49,7 +49,7 @@ export default async function Officials({ ward }: { ward: Ward | null | undefine
         <div className="flex flex-wrap items-center justify-between gap-2 p-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t('official.helpline')}</p>
-            <a href={`tel:${file.meta.rmcHelpline.phone}`} className="font-semibold text-laterite-dark underline">
+            <a href={`tel:${file.meta.rmcHelpline.phone}`} className="font-semibold text-jharna-dark underline">
               {file.meta.rmcHelpline.phone}
             </a>
           </div>

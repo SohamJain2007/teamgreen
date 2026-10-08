@@ -14,7 +14,7 @@ export function AdminLogin({ disabled }: { disabled: boolean }) {
   const router = useRouter();
   const [pw, setPw] = useState('');
   const [err, setErr] = useState(false);
-  if (disabled) return <p className="card p-4 font-semibold text-laterite-dark">{t('admin.disabled')}</p>;
+  if (disabled) return <p className="card p-4 font-semibold text-palash-dark">{t('admin.disabled')}</p>;
   return (
     <form
       className="card mx-auto max-w-sm space-y-3 p-4"
@@ -29,7 +29,7 @@ export function AdminLogin({ disabled }: { disabled: boolean }) {
         {t('admin.password')}
         <input type="password" className="field mt-1" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus autoComplete="current-password" />
       </label>
-      {err && <p className="text-sm font-semibold text-laterite-dark" role="alert">{t('admin.wrong')}</p>}
+      {err && <p className="text-sm font-semibold text-palash-dark" role="alert">{t('admin.wrong')}</p>}
       <button className="btn-primary w-full">{t('admin.login')}</button>
     </form>
   );
@@ -93,8 +93,8 @@ export default function AdminPanel({ reports }: { reports: Report[] }) {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <StatusBadge status={r.status} />
                   {r.isDemo && <DemoBadge />}
-                  {r.hidden && <span className="rounded bg-laterite px-1.5 py-0.5 text-[10px] font-bold text-white">{t('admin.hidden')}</span>}
-                  {r.spamFlags > 0 && <span className="text-xs font-semibold text-laterite-dark">{t('admin.flags', { n: r.spamFlags })}</span>}
+                  {r.hidden && <span className="rounded bg-palash px-1.5 py-0.5 text-[10px] font-bold text-white">{t('admin.hidden')}</span>}
+                  {r.spamFlags > 0 && <span className="text-xs font-semibold text-palash-dark">{t('admin.flags', { n: r.spamFlags })}</span>}
                 </div>
                 <Link href={`/r/${r.id}`} className="block font-semibold underline">
                   #{r.id} · {r.category ? t(`cat.${r.category}`) : t('r.title')}{r.ward != null ? ` · ${t('ward.title', { n: r.ward })}` : ''}
@@ -129,7 +129,7 @@ export default function AdminPanel({ reports }: { reports: Report[] }) {
               ) : (
                 <button disabled={busy === r.id} onClick={() => act(r.id, 'hide')} className="btn-ghost !min-h-[40px] !py-1.5">{t('admin.hide')}</button>
               )}
-              <button disabled={busy === r.id} onClick={() => act(r.id, 'delete')} className="ml-auto text-sm font-semibold text-laterite-dark underline">{t('admin.delete')}</button>
+              <button disabled={busy === r.id} onClick={() => act(r.id, 'delete')} className="ml-auto text-sm font-semibold text-palash-dark underline">{t('admin.delete')}</button>
             </div>
           </li>
         ))}

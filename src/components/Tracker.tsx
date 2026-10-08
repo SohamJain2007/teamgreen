@@ -59,7 +59,7 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
           {t('tracker.filters')}{active ? ` (${active})` : ''}
         </button>
         {active > 0 && (
-          <button onClick={() => setF({ ward: '', zone: '', status: '', category: '', date: '' })} className="text-sm font-semibold text-laterite-dark underline">
+          <button onClick={() => setF({ ward: '', zone: '', status: '', category: '', date: '' })} className="text-sm font-semibold text-jharna-dark underline">
             {t('tracker.clear')}
           </button>
         )}
@@ -96,7 +96,7 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
       <div className="flex flex-wrap gap-3 text-xs font-semibold">
         {STATUSES.map((s) => (
           <span key={s} className="flex items-center gap-1.5">
-            <span className={`h-3 w-3 rounded-full ${s === 'reported' ? 'bg-laterite' : s === 'acknowledged' ? 'bg-haldi' : 'bg-sal'}`} />
+            <span className={`h-3 w-3 rounded-full ${s === 'reported' ? 'bg-palash' : s === 'acknowledged' ? 'bg-haldi' : 'bg-sal'}`} />
             {t(`status.${s}`)}
           </span>
         ))}
@@ -114,7 +114,7 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
           ) : (
             <ul className="space-y-2 md:max-h-[70vh] md:overflow-y-auto md:pr-1">
               {filtered.map((r) => (
-                <li key={r.id}>
+                <li key={r.id} className="min-w-0">
                   <ReportCard r={r} wardName={r.ward != null ? wardInfo.get(r.ward)?.name : null} />
                 </li>
               ))}

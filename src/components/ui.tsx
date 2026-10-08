@@ -6,9 +6,9 @@ import type { Report } from '@/lib/reports';
 import type { Status } from '@/lib/constants';
 
 export const STATUS_STYLE: Record<Status, { bg: string; text: string; dot: string; glyph: string; hex: string }> = {
-  reported: { bg: 'bg-laterite-soft', text: 'text-laterite-dark', dot: 'bg-laterite', glyph: '!', hex: '#B5361E' },
+  reported: { bg: 'bg-palash-soft', text: 'text-palash-dark', dot: 'bg-palash', glyph: '!', hex: '#DD5A26' },
   acknowledged: { bg: 'bg-haldi-soft', text: 'text-haldi-text', dot: 'bg-haldi', glyph: '…', hex: '#C77D0A' },
-  cleared: { bg: 'bg-sal-soft', text: 'text-sal-dark', dot: 'bg-sal', glyph: '✓', hex: '#2E7D4F' },
+  cleared: { bg: 'bg-sal-soft', text: 'text-sal-dark', dot: 'bg-sal', glyph: '✓', hex: '#1A7A50' },
 };
 
 export function StatusBadge({ status }: { status: Status }) {
@@ -73,7 +73,7 @@ export function ReportCard({ r, wardName }: { r: Report; wardName?: string | nul
 export function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="card p-3 text-center">
-      <p className="font-display text-3xl leading-none">{value}</p>
+      <p className="font-display text-3xl leading-none text-sal-dark">{value}</p>
       <p className="mt-1 text-xs font-semibold text-muted">{label}</p>
       {sub && <p className="text-[11px] text-muted">{sub}</p>}
     </div>

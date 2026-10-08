@@ -25,7 +25,7 @@ export default function LocationPickerImpl({ value, onChange }: Props) {
         className: 'sr-pin',
         iconSize: [36, 36],
         iconAnchor: [18, 36],
-        html: '<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#B5361E;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>',
+        html: '<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#1A7A50;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>',
       }),
     });
     if (value) mk.addTo(m);

@@ -39,11 +39,11 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
 
   return (
     <article className="mx-auto max-w-2xl space-y-5">
-      <Link href="/map" className="text-sm font-semibold text-laterite-dark underline">← {t('nav.map')}</Link>
+      <Link href="/map" className="text-sm font-semibold text-jharna-dark underline">← {t('nav.map')}</Link>
 
       {sp.new && <p className="rounded-2xl bg-sal-soft p-3 font-semibold text-sal-dark" role="status">{t('r.new')}</p>}
       {sp.voted && <p className="rounded-2xl bg-sal-soft p-3 font-semibold text-sal-dark" role="status">{t('r.upped')}</p>}
-      {r.hidden && <p className="rounded-2xl bg-laterite-soft p-3 font-semibold text-laterite-dark">{t('r.hiddenNote')}</p>}
+      {r.hidden && <p className="rounded-2xl bg-palash-soft p-3 font-semibold text-palash-dark">{t('r.hiddenNote')}</p>}
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -60,7 +60,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
             ? t('r.clearedIn', { n: daysBetween(r.createdAt, r.clearedAt) })
             : t('r.daysOpen', { n: daysBetween(r.createdAt, now) })}
         </p>
-        {r.note && <p className="rounded-xl border-l-4 border-laterite bg-white p-3">{r.note}</p>}
+        {r.note && <p className="rounded-xl border-l-4 border-palash bg-white p-3">{r.note}</p>}
       </header>
 
       {r.status === 'cleared' && r.afterPhoto ? (
@@ -90,7 +90,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
             return (
               <li key={s} className="relative flex gap-3 pb-4 last:pb-0">
                 {i < STATUSES.length - 1 && <span className={`absolute left-[11px] top-6 h-[calc(100%-1.5rem)] w-0.5 ${reached[STATUSES[i + 1]] ? 'bg-ink' : 'bg-line'}`} />}
-                <span className={`z-[1] mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-white ${done ? (s === 'reported' ? 'bg-laterite' : s === 'acknowledged' ? 'bg-haldi' : 'bg-sal') : 'bg-line text-muted'}`}>
+                <span className={`z-[1] mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-white ${done ? (s === 'reported' ? 'bg-palash' : s === 'acknowledged' ? 'bg-haldi' : 'bg-sal') : 'bg-line text-muted'}`}>
                   {done ? '✓' : ''}
                 </span>
                 <div>
@@ -117,11 +117,11 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
         <p className="mt-2 text-sm text-muted">
           {r.lat.toFixed(5)}, {r.lng.toFixed(5)} · {t(`r.locSource.${r.locSource}`)}
           {r.accuracy ? ` ±${r.accuracy} m` : ''} ·{' '}
-          <a href={gmaps} className="font-semibold text-laterite-dark underline" target="_blank" rel="noopener noreferrer">{t('r.openMap')}</a>
+          <a href={gmaps} className="font-semibold text-jharna-dark underline" target="_blank" rel="noopener noreferrer">{t('r.openMap')}</a>
         </p>
         {ward && (
           <p className="mt-1 text-sm">
-            <Link href={`/ward/${ward.wardNumber}`} className="font-semibold text-laterite-dark underline">
+            <Link href={`/ward/${ward.wardNumber}`} className="font-semibold text-jharna-dark underline">
               {t('ward.title', { n: ward.wardNumber })}{ward.name ? ` · ${ward.name}` : ''}
             </Link>
             {ward.zone && <> · {t(`zone.${ward.zone}`)}</>} <span className="text-muted">({r.wardAuto ? t('r.wardAutoNote') : t('r.wardChosen')})</span>

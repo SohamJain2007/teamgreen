@@ -154,7 +154,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
         <h1 className="text-3xl">{t('report.title')}</h1>
         <p className="text-muted">{t('report.lead')}</p>
         {hiddenInputs}
-        <button onClick={() => camRef.current?.click()} className="grid aspect-[4/3] w-full place-items-center rounded-3xl border-2 border-dashed border-laterite bg-laterite-soft text-laterite-dark transition active:scale-[.99]">
+        <button onClick={() => camRef.current?.click()} className="grid aspect-[4/3] w-full place-items-center rounded-3xl border-2 border-dashed border-sal/50 bg-gradient-to-b from-sal-soft to-jharna-soft text-sal-dark transition hover:border-sal active:scale-[.99]">
           <span className="flex flex-col items-center gap-2">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M4 8h3l2-3h6l2 3h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" />
@@ -185,7 +185,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
               : t('report.locked', { m: Math.round(loc?.accuracy ?? 0) });
     return (
       <div className="flex items-center gap-2 text-sm">
-        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${locState === 'ok' || loc?.source === 'pin' ? 'bg-sal' : locState === 'loading' ? 'animate-pulse bg-haldi' : 'bg-laterite'}`} />
+        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${locState === 'ok' || loc?.source === 'pin' ? 'bg-sal' : locState === 'loading' ? 'animate-pulse bg-haldi' : 'bg-palash'}`} />
         <span className="font-medium">{loc?.source === 'pin' && locState !== 'loading' ? t('report.locPinned') : msg}</span>
       </div>
     );
@@ -210,7 +210,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
       <div className="card space-y-2 p-3">
         <div className="flex items-center justify-between gap-2">
           <LocStatus />
-          <button onClick={() => setShowMap((v) => !v)} className="text-sm font-semibold text-laterite-dark underline">
+          <button onClick={() => setShowMap((v) => !v)} className="text-sm font-semibold text-jharna-dark underline">
             {t('report.adjust')}
           </button>
         </div>
@@ -250,7 +250,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
               <strong>{ward ? `${ward}${wardObj?.name ? ` · ${wardObj.name}` : ''}` : '—'}</strong>
               {ward && wardChoice == null && <span className="text-xs text-muted">({approx ? t('report.wardApprox') : t('report.wardAuto')})</span>}
               {loc && (
-                <button onClick={() => setEditWard(true)} className="font-semibold text-laterite-dark underline">
+                <button onClick={() => setEditWard(true)} className="font-semibold text-jharna-dark underline">
                   {t('report.wardChange')}
                 </button>
               )}
@@ -303,7 +303,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
           <textarea className="field mt-1 font-normal" rows={2} maxLength={280} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('report.notePlaceholder')} />
         </label>
       ) : (
-        <button onClick={() => setShowNote(true)} className="text-sm font-semibold text-laterite-dark underline">
+        <button onClick={() => setShowNote(true)} className="text-sm font-semibold text-jharna-dark underline">
           + {t('report.note')} ({t('report.optional')})
         </button>
       )}
@@ -311,7 +311,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
       {/* Honeypot: invisible to people, tempting to bots */}
       <input ref={honeyRef} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
 
-      {error && <p className="rounded-xl bg-laterite-soft p-3 text-sm font-semibold text-laterite-dark" role="alert">{error}</p>}
+      {error && <p className="rounded-xl bg-palash-soft p-3 text-sm font-semibold text-palash-dark" role="alert">{error}</p>}
 
       <div className="sticky bottom-20 z-10 md:bottom-4">
         <button onClick={submit} disabled={!canSubmit} className="btn-primary w-full text-lg shadow-lg">

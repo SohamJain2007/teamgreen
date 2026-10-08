@@ -36,7 +36,7 @@ export default async function Leaderboard({ searchParams }: { searchParams: Prom
       <td className="py-2 pr-2">
         <div className="flex items-center gap-2">
           <span className="w-6 text-right font-semibold">{s.open}</span>
-          {bar != null && <span className="hidden h-2 flex-1 rounded-full bg-line sm:block"><span className="block h-2 rounded-full bg-laterite" style={{ width: `${(s.open / bar) * 100}%` }} /></span>}
+          {bar != null && <span className="hidden h-2 flex-1 rounded-full bg-line sm:block"><span className="block h-2 rounded-full bg-palash" style={{ width: `${(s.open / bar) * 100}%` }} /></span>}
         </div>
       </td>
       <td className="py-2 pr-2">{s.cleared}</td>

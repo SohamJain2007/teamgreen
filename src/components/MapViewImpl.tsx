@@ -17,7 +17,7 @@ type Props = {
   highlightId?: string;
 };
 
-const HEX: Record<Status, string> = { reported: '#B5361E', acknowledged: '#C77D0A', cleared: '#2E7D4F' };
+const HEX: Record<Status, string> = { reported: '#DD5A26', acknowledged: '#C77D0A', cleared: '#1A7A50' };
 const GLYPH: Record<Status, string> = { reported: '!', acknowledged: '…', cleared: '✓' };
 
 export const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -52,7 +52,7 @@ function popupEl(p: MapPoint, statusLabel: string, openLabel: string) {
   const a = document.createElement('a');
   a.href = `/r/${p.id}`;
   a.textContent = openLabel + ' →';
-  a.style.cssText = 'font-weight:700;color:#8F2A17';
+  a.style.cssText = 'font-weight:700;color:#075E6B';
   root.append(img, st, lb, sub, a);
   return root;
 }
