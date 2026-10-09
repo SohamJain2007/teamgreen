@@ -33,9 +33,11 @@ export function pointInGeometry(lng: number, lat: number, geom: { type: string; 
 }
 
 /** Parses lat/lng from a request body and checks they are within `radiusM` of the target. */
-export function nearTo(target: { lat: number; lng: number }, lat: unknown, lng: unknown, radiusM: number): boolean {
+/** Metres from target to (lat, lng), or null if the coordinates are missing/invalid. */
+export function distanceTo(target: { lat: number; lng: number }, lat: unknown, lng: unknown): number | null {
   const la = Number(lat);
   const ln = Number(lng);
-  if (!Number.isFinite(la) || !Number.isFinite(ln)) return false;
-  return haversineM(la, ln, target.lat, target.lng) <= radiusM;
+  if (lat == null || lng == null || !Number.isFinite(la) || !Number.isFinite(ln)) return null;
+  return haversineM(la, ln, target.lat, target.lng);
 }
+

@@ -1,6 +1,6 @@
-import { json, fail } from '@/lib/api';
+import { json, fail, tooFar } from '@/lib/api';
 import { MAX_UPLOAD_BYTES, VERIFY_RADIUS_M } from '@/lib/constants';
-import { nearTo } from '@/lib/geo';
+import { distanceTo } from '@/lib/geo';
 import { processPhoto } from '@/lib/image';
 import { getReport, markCleared } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
@@ -18,7 +18,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (r.status === 'cleared') return fail('already_cleared', 409);
   const form = await req.formData().catch(() => null);
   if (!form) return fail('bad_form');
-  if (!nearTo(r, form.get('lat'), form.get('lng'), VERIFY_RADIUS_M)) return fail('too_far', 403);
+  const dist = distanceTo(r, form.get('lat'), form.get('lng'));
+  if (dist == null || dist > VERIFY_RADIUS_M) return tooFar(dist);
   const photo = form.get('photo');
   if (!(photo instanceof File) || photo.size === 0) return fail('photo');
   if (photo.size > MAX_UPLOAD_BYTES) return fail('photo_too_large', 413);

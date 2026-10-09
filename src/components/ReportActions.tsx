@@ -25,7 +25,8 @@ export default function ReportActions(p: Props) {
   const [flagged, setFlagged] = useState(false);
   const [dirtyVoted, setDirtyVoted] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // bar: shown in the sticky action bar (next to the button that was tapped) instead of at the top of the section.
+  const [msg, setMsg] = useState<{ ok: boolean; text: string; bar?: boolean } | null>(null);
   const cleanRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -40,14 +41,17 @@ export default function ReportActions(p: Props) {
     try { localStorage.setItem(`sr-${k}-${p.id}`, '1'); } catch {}
   };
 
-  async function locate() {
-    setMsg({ ok: true, text: t('r.locating') });
+  async function locate(bar = false) {
+    setMsg({ ok: true, text: t('r.locating'), bar });
     const pos = await getPosition();
-    if (!pos) setMsg({ ok: false, text: t('r.noLoc') });
+    if (!pos) setMsg({ ok: false, text: t('r.noLoc'), bar });
     return pos;
   }
-  const errText = (code: string | undefined, status: number) =>
-    code === 'too_far' ? t('r.tooFar', { m: p.radiusM }) : status === 429 ? t('report.err.rate') : t('r.err');
+  const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
+  const errText = (d: { error?: string; distanceM?: number | null }, status: number) =>
+    d.error === 'too_far'
+      ? d.distanceM != null ? t('r.tooFarDist', { d: fmtDist(d.distanceM), m: p.radiusM }) : t('r.tooFar', { m: p.radiusM })
+      : status === 429 ? t('report.err.rate') : t('r.err');
 
   async function postJson(path: string, pos: { lat: number; lng: number }) {
     const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pos) }).catch(() => null);
@@ -66,7 +70,7 @@ export default function ReportActions(p: Props) {
         remember('up');
         setMsg({ ok: true, text: d.verified && !p.verified ? t('r.verifiedNow') : t('r.upped') });
         router.refresh();
-      } else setMsg({ ok: false, text: errText(d.error, r?.status ?? 0) });
+      } else setMsg({ ok: false, text: errText(d, r?.status ?? 0) });
     }
     setBusy(null);
   }
@@ -74,7 +78,7 @@ export default function ReportActions(p: Props) {
   async function markClean(file: File | undefined) {
     if (!file) return;
     setBusy('clean');
-    const pos = await locate();
+    const pos = await locate(true);
     if (pos) {
       const fd = new FormData();
       fd.append('photo', await compress(file), 'after.jpg');
@@ -83,9 +87,9 @@ export default function ReportActions(p: Props) {
       const r = await fetch(`/api/reports/${p.id}/clean`, { method: 'POST', body: fd }).catch(() => null);
       const d = r ? await r.json().catch(() => ({})) : {};
       if (r?.ok) {
-        setMsg({ ok: true, text: t('r.clean.done') });
+        setMsg({ ok: true, text: t('r.clean.done'), bar: true });
         router.refresh();
-      } else setMsg({ ok: false, text: errText(d.error, r?.status ?? 0) });
+      } else setMsg({ ok: false, text: errText(d, r?.status ?? 0), bar: true });
     }
     if (cleanRef.current) cleanRef.current.value = '';
     setBusy(null);
@@ -94,15 +98,15 @@ export default function ReportActions(p: Props) {
   async function stillDirty() {
     if (dirtyVoted || busy) return;
     setBusy('dirty');
-    const pos = await locate();
+    const pos = await locate(true);
     if (pos) {
       const { r, d } = await postJson(`/api/reports/${p.id}/still-dirty`, pos);
       if (r?.ok) {
         setDirtyVoted(true);
         remember('dirty');
-        setMsg({ ok: true, text: d.reopened ? t('r.dirty.reopened') : t('r.dirty.thanks', { n: p.reopenThreshold }) });
+        setMsg({ ok: true, text: d.reopened ? t('r.dirty.reopened') : t('r.dirty.thanks', { n: p.reopenThreshold }), bar: true });
         router.refresh();
-      } else setMsg({ ok: false, text: errText(d.error, r?.status ?? 0) });
+      } else setMsg({ ok: false, text: errText(d, r?.status ?? 0), bar: true });
     }
     setBusy(null);
   }
@@ -112,7 +116,7 @@ export default function ReportActions(p: Props) {
     await fetch(`/api/reports/${p.id}/spam`, { method: 'POST' }).catch(() => null);
     setFlagged(true);
     remember('spam');
-    setMsg({ ok: true, text: t('r.spamThanks') });
+    setMsg({ ok: true, text: t('r.spamThanks'), bar: true });
   }
 
   const confirmations = Math.max(0, upvotes - 1);
@@ -120,9 +124,7 @@ export default function ReportActions(p: Props) {
 
   return (
     <>
-      {msg && (
-        <p role="status" className={`rounded-xl p-3 text-sm font-semibold ${msg.ok ? 'bg-sal-soft text-sal-dark' : 'bg-palash-soft text-palash-dark'}`}>{msg.text}</p>
-      )}
+      {msg && !msg.bar && <Msg ok={msg.ok} text={msg.text} />}
 
       {!cleared && (
         <section className="card space-y-3 p-4">
@@ -151,7 +153,7 @@ export default function ReportActions(p: Props) {
       {/* Sticky action bar, above the mobile bottom nav */}
       <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-[900] border-t border-line bg-white/95 px-3 pb-3 pt-2 backdrop-blur md:bottom-0">
         <div className="mx-auto max-w-2xl">
-          <p className="mb-2 text-center text-xs text-muted" suppressHydrationWarning>{p.summary}</p>
+          {msg?.bar ? <div className="mb-2"><Msg ok={msg.ok} text={msg.text} /></div> : <p className="mb-2 text-center text-xs text-muted" suppressHydrationWarning>{p.summary}</p>}
           <input ref={cleanRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => markClean(e.target.files?.[0])} />
           <div className="grid grid-cols-2 gap-2">
             {cleared ? (
@@ -173,4 +175,8 @@ export default function ReportActions(p: Props) {
       </div>
     </>
   );
+}
+
+function Msg({ ok, text }: { ok: boolean; text: string }) {
+  return <p role="status" className={`rounded-xl p-3 text-sm font-semibold ${ok ? 'bg-sal-soft text-sal-dark' : 'bg-palash-soft text-palash-dark'}`}>{text}</p>;
 }

@@ -1,6 +1,6 @@
-import { json, fail } from '@/lib/api';
+import { json, fail, tooFar } from '@/lib/api';
 import { REOPEN_THRESHOLD, VERIFY_RADIUS_M } from '@/lib/constants';
-import { nearTo } from '@/lib/geo';
+import { distanceTo } from '@/lib/geo';
 import { addStillDirty, getReport } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
 
@@ -13,7 +13,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!r || r.hidden) return fail('not_found', 404);
   if (r.status !== 'cleared') return fail('not_cleared', 409);
   const body = await req.json().catch(() => ({}));
-  if (!nearTo(r, body.lat, body.lng, VERIFY_RADIUS_M)) return fail('too_far', 403);
+  const dist = distanceTo(r, body.lat, body.lng);
+  if (dist == null || dist > VERIFY_RADIUS_M) return tooFar(dist);
   const res = addStillDirty(id, client, REOPEN_THRESHOLD);
   return json(res ? { ...res, already: false } : { already: true });
 }

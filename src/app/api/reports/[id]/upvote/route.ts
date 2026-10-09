@@ -1,6 +1,6 @@
-import { json, fail } from '@/lib/api';
+import { json, fail, tooFar } from '@/lib/api';
 import { VERIFY_CONFIRMATIONS, VERIFY_RADIUS_M } from '@/lib/constants';
-import { nearTo } from '@/lib/geo';
+import { distanceTo } from '@/lib/geo';
 import { enqueueForReport } from '@/lib/notify';
 import { addEvent, addVote, getReport, maybeVerify } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
@@ -13,7 +13,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const r = getReport(id);
   if (!r || r.hidden) return fail('not_found', 404);
   const body = await req.json().catch(() => ({}));
-  if (!nearTo(r, body.lat, body.lng, VERIFY_RADIUS_M)) return fail('too_far', 403);
+  const dist = distanceTo(r, body.lat, body.lng);
+  if (dist == null || dist > VERIFY_RADIUS_M) return tooFar(dist);
   const count = addVote(id, 'up', client);
   let verified = false;
   if (count !== null) {
