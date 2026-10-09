@@ -1,11 +1,11 @@
 /**
- * Background upkeep for a long-running server (Railway): retries undelivered messages, keeps a daily
+ * Background upkeep for a long-running server (Railway): escalates uncleared complaints, retries undelivered messages, keeps a daily
  * database snapshot, and clears expired rate-limit rows. Started once from src/instrumentation.ts.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { closeDb, dbPath, getDb } from './db';
-import { dispatchPending } from './notify';
+import { dispatchPending, runEscalations } from './notify';
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -35,6 +35,7 @@ function lastBackupAt(): number {
 
 async function tick() {
   try {
+    runEscalations();
     await dispatchPending();
     getDb().prepare('DELETE FROM rate_limits WHERE reset_at < ?').run(Date.now());
     if (Date.now() - lastBackupAt() > DAY) console.log('[maintenance] backup written:', await backupNow());

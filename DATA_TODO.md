@@ -70,3 +70,14 @@ official until you flip that flag. **Nothing below has been checked by a human.*
 - [ ] **RMC Health / Sanitation officer contacts.** Not found; `healthOfficer` is `null`. Ideally add zonal sanitation officers/inspectors per zone and a per-ward sanitary inspector (this needs a schema addition if you want it shown per ward).
 - [ ] **RMC grievance channels.** The app does *not* forward reports to RMC. If RMC has an API/email/WhatsApp intake, an integration is the biggest remaining accountability win.
 - [ ] Confirm the **helpline** number and email still work.
+
+## Councillor emails (optional)
+
+Complaints reach each ward councillor by **SMS** to `councillorPhone`. If you collect a councillor's email, add
+`"councillorEmail": "name@example.com"` to that ward in `data/wards.json` and they get an email (with the photo) instead.
+
+## Escalation contacts (needed for day 15 and day 30 escalations)
+
+Fill `"escalation"` in `data/wards.json`: `commissioner` (Municipal Commissioner, RMC), `sdo` (SDO, Ranchi Sadar) and
+`dc` (Deputy Commissioner, Ranchi). Give an official email (preferred) or mobile, then set `verified: true`.
+Until then those steps are logged as "skipped" in /admin and nothing is sent to them.

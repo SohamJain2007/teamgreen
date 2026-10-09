@@ -3,7 +3,7 @@ import { CATEGORIES, MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYT
 import { normEmail, normPhone } from '@/lib/contact';
 import { haversineM } from '@/lib/geo';
 import { processPhoto } from '@/lib/image';
-import { addEvent, insertReport, newId } from '@/lib/reports';
+import { addEvent, insertReport, newId, recordReporterVote } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
 import { getStorage } from '@/lib/storage';
 import { getWard, resolveWard } from '@/lib/wards';
@@ -86,5 +86,6 @@ export async function POST(req: Request) {
     contactPhone,
   });
   addEvent(id, 'reported');
+  recordReporterVote(id, client);
   return json({ id });
 }

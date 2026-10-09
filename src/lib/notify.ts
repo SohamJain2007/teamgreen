@@ -1,12 +1,13 @@
 /**
- * Sends verified complaints to officials: an email to RMC (photo attached) and a WhatsApp message to the ward councillor.
+ * Sends verified complaints to officials: an email to RMC (photo attached) and the ward councillor (email if known in
+ * data/wards.json, otherwise SMS). The reporter is CC'd on complaint emails when they gave an email.
  *
  * NOTIFY_MODE controls whether anything leaves the server:
  *   off      (default) nothing is queued or sent
  *   dry-run  everything is queued and logged as "dry_run", nothing is sent
- *   live     real email (SMTP) and WhatsApp (Meta Cloud API) messages are sent
+ *   live     real email (SMTP) and SMS (SMS_PROVIDER) messages are sent
  * Councillors whose ward is not `verified: true` in data/wards.json are skipped unless NOTIFY_UNVERIFIED_CONTACTS=true,
- * so an unchecked phone number never receives complaints by accident.
+ * so an unchecked phone number or email never receives complaints by accident.
  *
  * When a spot is cleared, the reporter is told by email and/or SMS (whichever they gave). REPORTER_NOTIFY_MODE takes the
  * same values and controls these separately, so reporters can be told without sending anything to officials.
@@ -15,14 +16,19 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import { getDb } from './db';
 import { addEvent, getContact, getReport, type Report } from './reports';
-import { getWard, getWardFile } from './wards';
+import { getEscalationContact, getWard, getWardFile } from './wards';
+import { ESCALATION_STEPS, type EscalationStep, type NotifyRole } from './constants';
 import { getStorage } from './storage';
+import { normEmail, normPhone } from './contact';
 import { translate } from './translations';
 
 type Mode = 'off' | 'dry-run' | 'live';
-type Channel = 'email' | 'whatsapp' | 'sms';
-type Kind = 'complaint' | 'cleared';
-type Row = { id: number; report_id: string; channel: Channel; kind: Kind; recipient: string; status: string; attempts: number };
+type Channel = 'email' | 'sms' | 'whatsapp'; // whatsapp: rows from before it was replaced by SMS, never sent
+type Kind = 'complaint' | EscalationStep | 'cleared';
+type Row = { id: number; report_id: string; channel: Channel; kind: Kind; role: string | null; recipient: string; status: string; attempts: number };
+
+const DAY = 86_400_000;
+const stepOf = (kind: Kind) => ESCALATION_STEPS.find((s) => s.step === kind);
 
 const MAX_ATTEMPTS = 5;
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
@@ -38,13 +44,11 @@ export function reporterMode(): Mode {
 }
 const modeFor = (kind: Kind) => (kind === 'cleared' ? reporterMode() : notifyMode());
 
-/** Indian mobile number (first one if several are "/"-separated) as WhatsApp wants it: 91XXXXXXXXXX. */
-export function waNumber(phone: string | null | undefined): string | null {
-  const d = (phone ?? '').split('/')[0].replace(/\D/g, '');
-  if (d.length === 10) return `91${d}`;
-  if (d.length === 12 && d.startsWith('91')) return d;
-  return null;
-}
+/** Councillor mobile (first one if several are "/"-separated) as 10 digits, or null. */
+export const councillorMobile = (phone: string | null | undefined) => normPhone((phone ?? '').split('/')[0]);
+
+/** Where complaints to RMC go. */
+export const rmcEmail = () => process.env.RMC_EMAIL || getWardFile().meta.rmcHelpline.email;
 
 export const mapsUrl = (r: Pick<Report, 'lat' | 'lng'>) => `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`;
 export const reportUrl = (id: string) => `${SITE}/r/${id}`;
@@ -65,30 +69,106 @@ export function complaintText(r: Report): string {
     .join('\n');
 }
 
-/** Queue deliveries for a newly verified report and start sending. */
-export function enqueueForReport(reportId: string) {
-  const mode = notifyMode();
-  if (mode === 'off') return;
+const daysOpen = (r: Report) => Math.floor((Date.now() - (r.verifiedAt ?? r.createdAt)) / DAY);
+const wardText = (r: Report) => {
+  const w = r.ward != null ? getWard(r.ward) : undefined;
+  return w ? `Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : '';
+};
+
+/** Short complaint or escalation for an SMS (one or two SMS segments). */
+export function complaintSms(r: Report, kind: Kind = 'complaint'): string {
+  const where = wardText(r) ? ` in ${wardText(r)}` : '';
+  const step = stepOf(kind);
+  if (step) return `SafaiRanchi ${step.label}: complaint #${r.id}${where} is still not cleared after ${daysOpen(r)} days. Photo and location: ${reportUrl(r.id)}`;
+  const what = r.category ? translate('en', `cat.${r.category}`) : 'Garbage spot';
+  const n = Math.max(0, r.upvotes - 1);
+  return `SafaiRanchi: new complaint #${r.id}${where}: ${what}${n ? `, confirmed by ${n} residents` : ''}. Photo and location: ${reportUrl(r.id)}`;
+}
+
+/** First lines of an escalation email (empty for the original complaint). */
+function escalationIntro(r: Report, kind: Kind): string {
+  const step = stepOf(kind);
+  if (!step || !r.verifiedAt) return '';
+  const sent = new Date(r.verifiedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' });
+  return `${step.label.toUpperCase()}: this complaint was sent to RMC and the ward councillor on ${sent} and is still not cleared after ${daysOpen(r)} days.\n\n`;
+}
+
+/** Where a message to `role` about report `r` goes: [channel, address] or a reason it cannot be sent. */
+function resolve(r: Report, role: NotifyRole): { channel: Channel; to: string } | { channel: Channel; label: string; skip: string } {
+  const unverifiedOk = process.env.NOTIFY_UNVERIFIED_CONTACTS === 'true';
+  if (role === 'rmc') {
+    const to = rmcEmail();
+    return to ? { channel: 'email', to } : { channel: 'email', label: 'RMC', skip: 'no RMC email' };
+  }
+  if (role === 'councillor') {
+    // Email when we have one, otherwise SMS to their mobile.
+    const w = r.ward != null ? getWard(r.ward) : undefined;
+    if (!w) return { channel: 'sms', label: 'unknown ward', skip: 'report has no ward' };
+    const email = normEmail(w.councillorEmail);
+    const to = email ?? councillorMobile(w.councillorPhone);
+    const channel: Channel = email ? 'email' : 'sms';
+    if (!to) return { channel, label: `ward ${w.wardNumber}`, skip: 'no councillor email or valid mobile' };
+    if (!w.verified && !unverifiedOk) return { channel, label: to, skip: `ward ${w.wardNumber} contact not verified (set verified:true in wards.json)` };
+    return { channel, to };
+  }
+  const c = getEscalationContact(role);
+  const email = normEmail(c?.email);
+  const to = email ?? normPhone(c?.phone);
+  const channel: Channel = email ? 'email' : 'sms';
+  if (!to) return { channel, label: role, skip: `no email or mobile for ${role} in wards.json "escalation"` };
+  if (!c!.verified && !unverifiedOk) return { channel, label: to, skip: `${role} contact not verified (set verified:true in wards.json "escalation")` };
+  return { channel, to };
+}
+
+/** Queue one message per role for this report (a complaint or an escalation step) and start sending. */
+export function enqueue(reportId: string, kind: Exclude<Kind, 'cleared'>, roles: readonly NotifyRole[]) {
+  if (notifyMode() === 'off') return;
   const r = getReport(reportId);
   if (!r) return;
-  const db = getDb();
-  const ins = db.prepare(
-    'INSERT OR IGNORE INTO notifications (report_id, channel, recipient, status, error, created_at) VALUES (?,?,?,?,?,?)',
+  const ins = getDb().prepare(
+    'INSERT OR IGNORE INTO notifications (report_id, kind, role, channel, recipient, status, error, created_at) VALUES (?,?,?,?,?,?,?,?)',
   );
   const now = Date.now();
-
-  const rmcEmail = process.env.RMC_EMAIL || getWardFile().meta.rmcHelpline.email;
-  if (rmcEmail) ins.run(r.id, 'email', rmcEmail, 'pending', null, now);
-
-  const w = r.ward != null ? getWard(r.ward) : undefined;
-  const num = waNumber(w?.councillorPhone);
-  if (!w) ins.run(r.id, 'whatsapp', 'unknown ward', 'skipped', 'report has no ward', now);
-  else if (!num) ins.run(r.id, 'whatsapp', `ward ${w.wardNumber}`, 'skipped', 'no valid councillor phone', now);
-  else if (!w.verified && process.env.NOTIFY_UNVERIFIED_CONTACTS !== 'true')
-    ins.run(r.id, 'whatsapp', num, 'skipped', `ward ${w.wardNumber} contact not verified (set verified:true in wards.json)`, now);
-  else ins.run(r.id, 'whatsapp', num, 'pending', null, now);
-
+  for (const role of roles) {
+    const d = resolve(r, role);
+    if ('to' in d) ins.run(r.id, kind, role, d.channel, d.to, 'pending', null, now);
+    else ins.run(r.id, kind, role, d.channel, d.label, 'skipped', d.skip, now);
+  }
   void dispatchPending();
+}
+
+/** Queue deliveries for a newly verified report: RMC and the ward councillor. */
+export function enqueueForReport(reportId: string) {
+  enqueue(reportId, 'complaint', ['rmc', 'councillor']);
+}
+
+/**
+ * Takes the next escalation step for every verified report that is still not cleared (called every few minutes).
+ * If several steps are overdue at once (e.g. sending was switched on late), only the latest is sent.
+ */
+export function runEscalations(now = Date.now()) {
+  if (notifyMode() === 'off') return;
+  const db = getDb();
+  const reports = db
+    .prepare(
+      `SELECT id, verified_at FROM reports WHERE verified_at IS NOT NULL AND verified_at <= ? AND status != 'cleared' AND hidden = 0 AND is_demo = 0`,
+    )
+    .all(now - ESCALATION_STEPS[0].day * DAY) as { id: string; verified_at: number }[];
+  const done = db.prepare('SELECT step FROM escalations WHERE report_id = ?').pluck();
+  const mark = db.prepare('INSERT OR IGNORE INTO escalations (report_id, step, at, sent) VALUES (?,?,?,?)');
+  for (const { id, verified_at } of reports) {
+    const taken = new Set(done.all(id) as string[]);
+    const days = (now - verified_at) / DAY;
+    const due = ESCALATION_STEPS.filter((s) => s.day <= days && !taken.has(s.step));
+    if (!due.length) continue;
+    const step = due[due.length - 1];
+    db.transaction(() => {
+      for (const s of due.slice(0, -1)) mark.run(id, s.step, now, 0);
+      mark.run(id, step.step, now, 1);
+      addEvent(id, 'escalated', `${step.label} (day ${step.day})`);
+    })();
+    enqueue(id, step.step, step.roles);
+  }
 }
 
 /** Short message to the reporter that their spot was cleared, used for both email and SMS. */
@@ -103,7 +183,7 @@ export function enqueueCleared(reportId: string) {
   const { email, phone } = getContact(reportId);
   if (!email && !phone) return;
   const ins = getDb().prepare(
-    "INSERT OR IGNORE INTO notifications (report_id, channel, kind, recipient, status, created_at) VALUES (?,?,'cleared',?,'pending',?)",
+    "INSERT OR IGNORE INTO notifications (report_id, channel, kind, role, recipient, status, created_at) VALUES (?,?,'cleared','reporter',?,'pending',?)",
   );
   const now = Date.now();
   if (email) ins.run(reportId, 'email', email, now);
@@ -119,16 +199,18 @@ export async function dispatchPending() {
   try {
     const db = getDb();
     // Only kinds whose sending is switched on; the others stay pending.
-    const kinds = (['complaint', 'cleared'] as Kind[]).filter((k) => modeFor(k) !== 'off');
+    const only = notifyMode() === 'off' ? "AND kind = 'cleared'" : reporterMode() === 'off' ? "AND kind != 'cleared'" : '';
     const rows = db
-      .prepare(
-        `SELECT * FROM notifications WHERE status IN ('pending','failed') AND attempts < ? AND kind IN (${kinds.map(() => '?').join(',')}) ORDER BY id LIMIT 20`,
-      )
-      .all(MAX_ATTEMPTS, ...kinds) as Row[];
+      .prepare(`SELECT * FROM notifications WHERE status IN ('pending','failed') AND attempts < ? ${only} ORDER BY id LIMIT 20`)
+      .all(MAX_ATTEMPTS) as Row[];
     for (const row of rows) {
       const r = getReport(row.report_id);
       if (!r || r.hidden) {
         db.prepare("UPDATE notifications SET status='skipped', error='report removed' WHERE id=?").run(row.id);
+        continue;
+      }
+      if (row.channel === 'whatsapp') {
+        db.prepare("UPDATE notifications SET status='skipped', error='WhatsApp sending was removed' WHERE id=?").run(row.id);
         continue;
       }
       const mode = modeFor(row.kind);
@@ -136,13 +218,18 @@ export async function dispatchPending() {
         const cleared = row.kind === 'cleared';
         if (mode === 'live') {
           if (cleared) await (row.channel === 'sms' ? sendSms(row.recipient, clearedText(r)) : sendClearedEmail(r, row.recipient));
-          else await (row.channel === 'email' ? sendEmail(r, row.recipient) : sendWhatsApp(r, row.recipient));
-        } else console.log(`[notify dry-run] ${row.kind} ${row.channel} -> ${row.recipient}\n${cleared ? clearedText(r) : complaintText(r)}`);
+          else if (row.channel === 'email') await sendEmail(r, row.recipient, row.kind);
+          else await sendSms(row.recipient, complaintSms(r, row.kind));
+        } else {
+          const body = cleared ? clearedText(r) : row.channel === 'sms' ? complaintSms(r, row.kind) : escalationIntro(r, row.kind) + complaintText(r);
+          const cc = !cleared && row.channel === 'email' ? getContact(r.id).email : null;
+          console.log(`[notify dry-run] ${row.kind} ${row.channel} -> ${row.recipient}${cc ? ` (cc ${cc})` : ''}\n${body}`);
+        }
         db.prepare('UPDATE notifications SET status=?, error=NULL, attempts=attempts+1, sent_at=? WHERE id=?').run(
           mode === 'live' ? 'sent' : 'dry_run', Date.now(), row.id,
         );
         // The public timeline only shows deliveries to officials, never that the reporter was contacted.
-        if (!cleared) addEvent(r.id, 'notified', `${row.channel}${mode === 'live' ? '' : ' (dry run)'}`);
+        if (row.kind === 'complaint') addEvent(r.id, 'notified', `${row.channel}${mode === 'live' ? '' : ' (dry run)'}`);
       } catch (e) {
         db.prepare("UPDATE notifications SET status='failed', error=?, attempts=attempts+1 WHERE id=?").run(String(e).slice(0, 500), row.id);
       }
@@ -178,55 +265,23 @@ function mailer() {
   return transport;
 }
 
-async function sendEmail(r: Report, to: string) {
+async function sendEmail(r: Report, to: string, kind: Kind = 'complaint') {
   const from = process.env.MAIL_FROM;
   if (!from) throw new Error('MAIL_FROM not set');
   const w = r.ward != null ? getWard(r.ward) : undefined;
   const photo = await getStorage().get(r.photo);
   const text = complaintText(r) + (w?.councillorName ? `\nWard councillor: ${w.councillorName}${w.councillorPhone ? `, ${w.councillorPhone}` : ''}` : '');
+  // The reporter is copied so they can follow up with the officials directly.
+  const cc = getContact(r.id).email ?? undefined;
   await mailer().sendMail({
     from,
     to,
+    cc: cc && cc !== to ? cc : undefined,
     replyTo: process.env.MAIL_REPLY_TO || undefined,
-    subject: `Garbage complaint #${r.id}${w ? ` - Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : ''}, Ranchi`,
-    text: `${text}\n\nThis complaint was reported and verified by citizens on SafaiRanchi, an independent citizen platform. Please update its status at the link above.`,
+    subject: `${stepOf(kind) ? `[${stepOf(kind)!.label}, ${daysOpen(r)} days] ` : ''}Garbage complaint #${r.id}${w ? ` - Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : ''}, Ranchi`,
+    text: `${escalationIntro(r, kind)}${text}\n\nThis complaint was reported and verified by citizens on SafaiRanchi, an independent citizen platform. Please update its status at the link above.`,
     attachments: photo ? [{ filename: `complaint-${r.id}.jpg`, content: photo, contentType: 'image/jpeg' }] : [],
   });
-}
-
-/**
- * WhatsApp Business (Meta Cloud API). Messages to officials are business-initiated, so they must use a template
- * approved in Meta Business Manager. Expected template body (5 parameters), see README:
- *   "New garbage complaint #{{1}} in {{2}}: {{3}}. Location: {{4}} Photo and status: {{5}}"
- */
-async function sendWhatsApp(r: Report, to: string) {
-  const token = process.env.WHATSAPP_TOKEN;
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const template = process.env.WHATSAPP_TEMPLATE;
-  if (!token || !phoneId || !template) throw new Error('WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_TEMPLATE not set');
-  const w = r.ward != null ? getWard(r.ward) : undefined;
-  const params = [
-    r.id,
-    w ? `Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : 'Ranchi',
-    r.category ? translate('en', `cat.${r.category}`) : 'Garbage spot',
-    mapsUrl(r),
-    reportUrl(r.id),
-  ];
-  const res = await fetch(`https://graph.facebook.com/${process.env.WHATSAPP_API_VERSION || 'v21.0'}/${phoneId}/messages`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to,
-      type: 'template',
-      template: {
-        name: template,
-        language: { code: process.env.WHATSAPP_TEMPLATE_LANG || 'en' },
-        components: [{ type: 'body', parameters: params.map((text) => ({ type: 'text', text })) }],
-      },
-    }),
-  });
-  if (!res.ok) throw new Error(`WhatsApp API ${res.status}: ${(await res.text()).slice(0, 300)}`);
 }
 
 async function sendClearedEmail(r: Report, to: string) {

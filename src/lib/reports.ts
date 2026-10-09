@@ -123,6 +123,11 @@ export function getContact(id: string): { email: string | null; phone: string | 
   return { email: r?.contact_email ?? null, phone: r?.contact_phone ?? null };
 }
 
+/** The reporter already counts as upvote 1; record their vote so they cannot also confirm (and verify) their own report. */
+export function recordReporterVote(id: string, client: string) {
+  getDb().prepare("INSERT OR IGNORE INTO votes (report_id, kind, client, created_at) VALUES (?, 'up', ?, ?)").run(id, client, Date.now());
+}
+
 /** Returns the new count, or null if this client already voted. Upvotes ("I see this too") are confirmations. */
 export function addVote(id: string, kind: 'up' | 'spam', client: string): number | null {
   const db = getDb();
@@ -204,7 +209,7 @@ export function zoneOf(wardNumber: number | null): Zone | null {
 }
 
 // ---------- events, verification, citizen clean-up ----------
-export type EventKind = 'reported' | 'confirmed' | 'verified' | 'notified' | 'acknowledged' | 'cleared' | 'still_dirty' | 'reopened';
+export type EventKind = 'reported' | 'confirmed' | 'verified' | 'notified' | 'escalated' | 'acknowledged' | 'cleared' | 'still_dirty' | 'reopened';
 export type ReportEvent = { at: number; kind: EventKind; detail: string | null };
 
 export function addEvent(reportId: string, kind: EventKind, detail: string | null = null, at = Date.now()) {

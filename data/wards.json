@@ -858,5 +858,29 @@
       "note": "Frontline officer for the ward",
       "name": null
     }
-  ]
+  ],
+  "escalation": {
+    "readme": "Officials contacted when a verified complaint stays uncleared (see README: escalation). Fill email (preferred) or phone, then set verified:true. Until then that step is logged as skipped.",
+    "commissioner": {
+      "title": "Municipal Commissioner, Ranchi Municipal Corporation",
+      "name": "Mr. Sushant Gaurav, IAS",
+      "email": null,
+      "phone": null,
+      "verified": false
+    },
+    "sdo": {
+      "title": "Sub-Divisional Officer (SDO), Ranchi Sadar",
+      "name": null,
+      "email": null,
+      "phone": null,
+      "verified": false
+    },
+    "dc": {
+      "title": "Deputy Commissioner (DC), Ranchi",
+      "name": null,
+      "email": null,
+      "phone": null,
+      "verified": false
+    }
+  }
 }

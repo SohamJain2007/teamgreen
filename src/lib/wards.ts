@@ -11,6 +11,8 @@ export type Ward = {
   area?: string | null;
   councillorName: string | null;
   councillorPhone: string | null;
+  /** Optional. When set, complaints go to this address instead of an SMS to councillorPhone. */
+  councillorEmail?: string | null;
   lat: number | null;
   lng: number | null;
   centroidSource: string | null;
@@ -42,8 +44,11 @@ type WardFile = {
   rmcOfficials: Official[];
   representatives?: { source: string; mp: Representative; mlas: Representative[]; assemblyMappingVerified: boolean };
   officerChain?: OfficerRole[];
+  escalation?: Partial<Record<EscalationRole, EscalationContact>>;
   wards: Ward[];
 };
+export type EscalationRole = 'commissioner' | 'sdo' | 'dc';
+export type EscalationContact = { title: string; name: string | null; email: string | null; phone: string | null; verified: boolean };
 type Boundary = { wardNumber: number; geometry: { type: string; coordinates: any } };
 
 const WARDS_PATH = path.join(process.cwd(), 'data', 'wards.json');
@@ -152,6 +157,11 @@ export function wardsOfRep(rep: Representative): Ward[] {
 export function assemblyMappingVerified(): boolean {
   return load().representatives?.assemblyMappingVerified ?? false;
 }
+/** Senior official for an escalation step (data/wards.json "escalation"), if configured. */
+export function getEscalationContact(role: EscalationRole): EscalationContact | undefined {
+  return load().escalation?.[role];
+}
+
 export function getOfficerChain(): OfficerRole[] {
   return load().officerChain ?? [];
 }

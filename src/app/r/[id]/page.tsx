@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getT } from '@/lib/lang-server';
+import type { Key } from '@/lib/translations';
 import { isAdmin } from '@/lib/auth';
 import { getReport, listEvents, severity } from '@/lib/reports';
-import { complaintText, listNotifications, notifyMode } from '@/lib/notify';
+import { complaintText, listNotifications, notifyMode, rmcEmail as getRmcEmail } from '@/lib/notify';
 import { assemblyMappingVerified, getMayor, getMp, getOfficerChain, getWard, getWardFile, mlaForWard } from '@/lib/wards';
 import { daysBetween, fmtDate, fmtAgo, fmtDuration, photoUrl } from '@/lib/format';
 import { DemoBadge, StatusBadge } from '@/components/ui';
@@ -37,6 +38,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const events = listEvents(r.id);
   // Only deliveries to officials are public; the reporter's own "cleared" notices are private.
   const deliveries = listNotifications(r.id).filter((d) => d.kind !== 'cleared');
+  const rmcEmail = getRmcEmail();
   const firstSent = events.find((e) => e.kind === 'notified')?.at ?? null;
   // Public journey of a complaint. "Sent" is the first successful (or test-mode) delivery to officials.
   const steps: { key: string; label: string; at: number | null; color: string; note?: string }[] = [
@@ -153,7 +155,11 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
           <ul className="mt-2 space-y-1 text-sm">
             {deliveries.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold">{t(d.channel === 'email' ? 'r.sent.email' : 'r.sent.whatsapp')}</span>
+                <span className="font-semibold">
+                  {d.role && d.channel !== 'whatsapp'
+                    ? `${d.kind !== 'complaint' ? `${t(`kind.${d.kind}` as Key)} · ` : ''}${t(`via.${d.channel}` as Key)} ${t(`to.${d.role}` as Key)}`
+                    : t(d.channel === 'sms' ? 'r.sent.sms' : d.channel === 'whatsapp' ? 'r.sent.whatsapp' : d.recipient === rmcEmail ? 'r.sent.email' : 'r.sent.councillorEmail')}
+                </span>
                 <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${d.status === 'sent' ? 'bg-sal-soft text-sal-dark' : d.status === 'failed' || d.status === 'skipped' ? 'bg-palash-soft text-palash-dark' : 'bg-haldi-soft text-haldi-text'}`}>
                   {t(`n.${d.status}` as Parameters<typeof t>[0])}
                 </span>

@@ -5,6 +5,23 @@ import path from 'node:path';
 // Vercel's filesystem is read-only except /tmp, so default there (data does not survive cold starts; see README).
 const DB_PATH = process.env.DATABASE_PATH || (process.env.VERCEL ? '/tmp/safai.db' : path.join(process.cwd(), 'data', 'safai.db'));
 
+const SCHEMA_NOTIFICATIONS = `
+CREATE TABLE IF NOT EXISTS notifications (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  report_id  TEXT NOT NULL,
+  kind       TEXT NOT NULL DEFAULT 'complaint', -- complaint | reminder1 | reminder2 | commissioner | reminder3 | sdo_dc | cleared
+  role       TEXT,                     -- who it is for: rmc | councillor | commissioner | sdo | dc | reporter
+  channel    TEXT NOT NULL,            -- email | sms (whatsapp: legacy, never sent)
+  recipient  TEXT NOT NULL,
+  status     TEXT NOT NULL,            -- pending | sent | dry_run | skipped | failed
+  error      TEXT,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  sent_at    INTEGER,
+  UNIQUE (report_id, kind, channel, recipient)
+);
+`;
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS reports (
   id              TEXT PRIMARY KEY,
@@ -53,20 +70,18 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_report ON events(report_id, at);
 
--- Outbox for complaints sent to officials (email to RMC, WhatsApp to councillor). One row per delivery.
-CREATE TABLE IF NOT EXISTS notifications (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  report_id  TEXT NOT NULL,
-  channel    TEXT NOT NULL,            -- email | whatsapp
-  recipient  TEXT NOT NULL,
-  status     TEXT NOT NULL,            -- pending | sent | dry_run | skipped | failed
-  error      TEXT,
-  attempts   INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL,
-  sent_at    INTEGER,
-  UNIQUE (report_id, channel, recipient)
-);
+-- Outbox: complaints to officials (email to RMC; email or SMS to the councillor) and "cleared" notices to reporters.
+${SCHEMA_NOTIFICATIONS}
 CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status);
+
+-- Escalation steps already taken for a report (reminders, commissioner, SDO/DC), so each fires once.
+CREATE TABLE IF NOT EXISTS escalations (
+  report_id  TEXT NOT NULL,
+  step       TEXT NOT NULL,
+  at         INTEGER NOT NULL,
+  sent       INTEGER NOT NULL DEFAULT 1,     -- 0 = passed over while catching up (a later step was due)
+  PRIMARY KEY (report_id, step)
+);
 
 CREATE TABLE IF NOT EXISTS rate_limits (
   key      TEXT PRIMARY KEY,
@@ -108,12 +123,25 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string][] = [
   ['reports', 'reopen_flags', 'INTEGER NOT NULL DEFAULT 0'], // "still dirty" votes since the last clear
   ['reports', 'contact_email', 'TEXT'],            // reporter's, private: only used to tell them it was cleared
   ['reports', 'contact_phone', 'TEXT'],            // 10-digit Indian mobile, same
-  ['notifications', 'kind', "TEXT NOT NULL DEFAULT 'complaint'"], // complaint (to officials) | cleared (to reporter)
+  ['notifications', 'kind', "TEXT NOT NULL DEFAULT 'complaint'"], // see the notifications table
+  ['notifications', 'role', 'TEXT'],
 ];
 
 function migrate(db: Database.Database) {
   for (const [table, column, ddl] of ADDED_COLUMNS) {
     const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
     if (!cols.some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  }
+  // Older databases allowed one delivery per (report, channel, recipient); reminders need one per step (kind).
+  const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='notifications'").get() as { sql: string }).sql;
+  if (!/UNIQUE\s*\(report_id,\s*kind,/.test(sql)) {
+    const cols = 'id, report_id, kind, role, channel, recipient, status, error, attempts, created_at, sent_at';
+    db.transaction(() => {
+      db.exec('ALTER TABLE notifications RENAME TO notifications_old');
+      db.exec(SCHEMA_NOTIFICATIONS);
+      db.exec(`INSERT INTO notifications (${cols}) SELECT ${cols} FROM notifications_old`);
+      db.exec('DROP TABLE notifications_old');
+      db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status)');
+    })();
   }
 }
