@@ -6,7 +6,8 @@ import { getWard, getWardFile } from '@/lib/wards';
 import { fmtNum } from '@/lib/format';
 import { ReportCard, Stat } from '@/components/ui';
 import { SalLeaf } from '@/components/Ranchi';
-import { GALLERY, PHOTOS, type Photo } from '@/lib/photos';
+import { GALLERY, PHOTOS, PLEDGE_SLIDES, type Photo } from '@/lib/photos';
+import PhotoSlider from '@/components/PhotoSlider';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,15 +105,21 @@ export default async function Home() {
         </ul>
       </section>
 
-      <section className="relative overflow-hidden rounded-3xl bg-jharna-dark px-5 py-10 text-white md:px-10 md:py-14">
-        <Image src={PHOTOS.lake.src} alt={t(PHOTOS.lake.place)} fill sizes="(min-width: 1024px) 1024px, 100vw" className="object-cover" />
+      <section className="relative overflow-hidden rounded-3xl bg-jharna-dark px-5 pb-12 pt-10 text-white md:px-10 md:py-16">
+        <PhotoSlider
+          slides={PLEDGE_SLIDES.map((ph) => ({
+            src: ph.src,
+            alt: t(ph.place),
+            credit: `${t(ph.place)} · ${t('photo.by', { name: ph.artist, license: ph.license })}`,
+            page: ph.page,
+          }))}
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-jharna-dark/95 via-jharna-dark/70 to-jharna-dark/10" />
-        <div className="relative max-w-xl">
+        <div className="relative z-[1] max-w-xl">
           <h2 className="text-2xl md:text-3xl">{t('home.pledge.t')}</h2>
           <p className="mt-2 text-white/85">{t('home.pledge.d')}</p>
           <Link href="/report" className="btn mt-5 bg-white text-jharna-dark hover:bg-jharna-soft">{t('home.cta')}</Link>
         </div>
-        <Credit photo={PHOTOS.lake} label={`${t(PHOTOS.lake.place)} · ${t('photo.by', { name: PHOTOS.lake.artist, license: PHOTOS.lake.license })}`} />
       </section>
 
       <p className="text-sm text-muted">{t('alsoRmc')}: <a href={`tel:${helpline}`} className="font-semibold underline">{helpline}</a></p>

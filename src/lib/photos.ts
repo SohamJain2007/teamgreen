@@ -39,3 +39,6 @@ export const PHOTOS = {
 
 /** Home-page gallery order. */
 export const GALLERY: Photo[] = [PHOTOS.pahari, PHOTOS.jonha, PHOTOS.tagore, PHOTOS.dassam, PHOTOS.jagannath, PHOTOS.kanke];
+
+/** Home-page pledge banner slideshow. */
+export const PLEDGE_SLIDES: Photo[] = [PHOTOS.lake, PHOTOS.dassam, PHOTOS.pahari, PHOTOS.kanke, PHOTOS.jonha, PHOTOS.tagore];

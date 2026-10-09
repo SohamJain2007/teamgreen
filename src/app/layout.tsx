@@ -7,7 +7,9 @@ import { LangProvider } from '@/components/I18n';
 import { BottomNav, Header } from '@/components/Nav';
 import SWRegister from '@/components/SWRegister';
 import Link from 'next/link';
-import { RanchiSkyline, SohraiBand } from '@/components/Ranchi';
+import { SohraiBand } from '@/components/Ranchi';
+import { LogoMark } from '@/components/Logo';
+import { getWardFile } from '@/lib/wards';
 
 // Mukta: friendly Devanagari + Latin text face. Poppins: clean geometric headline face that also covers Devanagari.
 const body = Mukta({ subsets: ['latin', 'devanagari'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
@@ -27,25 +29,48 @@ export const viewport: Viewport = { themeColor: '#1A7A50', width: 'device-width'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = await getLang();
+  const helpline = getWardFile().meta.rmcHelpline.phone;
   return (
     <html lang={lang} className={`${body.variable} ${display.variable}`}>
       <body className="min-h-screen pb-24 md:pb-0">
         <LangProvider lang={lang}>
           <Header />
           <main className="mx-auto max-w-5xl px-4 py-5">{children}</main>
-          <div className="mx-auto mt-8 max-w-5xl px-4">
-            <RanchiSkyline className="block h-auto w-full" />
-          </div>
-          <footer className="border-t border-line bg-white">
+          <footer className="mt-12 border-t border-line bg-white">
             <SohraiBand className="block h-1.5" />
-            <div className="mx-auto max-w-5xl px-4 pb-8 pt-5 text-xs text-muted">
-              <p className="font-display text-sm text-sal-dark">{translate(lang, 'footer.made')}</p>
-              <p className="mt-2">{translate(lang, 'disclaimer')}</p>
-              <p className="mt-1">
-                © OpenStreetMap contributors ·{' '}
-                <Link href="/credits" className="underline hover:text-ink">{translate(lang, 'footer.credits')}</Link>
-              </p>
+            <div className="mx-auto grid max-w-5xl gap-8 px-4 pb-8 pt-8 text-sm md:grid-cols-[2fr_1fr_1fr]">
+              <div>
+                <Link href="/" className="inline-flex items-center gap-2">
+                  <LogoMark size={28} />
+                  <span className="font-display text-lg text-sal-dark">{translate(lang, 'app.name')}</span>
+                </Link>
+                <p className="mt-2 font-display text-sal-dark">{translate(lang, 'footer.made')}</p>
+                <p className="mt-2 max-w-md text-xs text-muted">{translate(lang, 'disclaimer')}</p>
+              </div>
+              <nav>
+                <p className="font-semibold text-ink">{translate(lang, 'footer.explore')}</p>
+                <ul className="mt-2 space-y-1.5 text-muted">
+                  {(['report', 'map', 'leaderboard'] as const).map((r) => (
+                    <li key={r}>
+                      <Link href={`/${r}`} className="hover:text-sal-dark">
+                        {translate(lang, r === 'report' ? 'nav.report' : r === 'map' ? 'nav.map' : 'nav.rankings')}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div>
+                <p className="font-semibold text-ink">{translate(lang, 'footer.help')}</p>
+                <ul className="mt-2 space-y-1.5 text-muted">
+                  <li>
+                    {translate(lang, 'footer.helpline')}:{' '}
+                    <a href={`tel:${helpline}`} className="font-semibold text-sal-dark hover:underline">{helpline}</a>
+                  </li>
+                  <li><Link href="/credits" className="hover:text-sal-dark">{translate(lang, 'footer.credits')}</Link></li>
+                </ul>
+              </div>
             </div>
+            <p className="border-t border-line py-3 text-center text-xs text-muted">© OpenStreetMap contributors</p>
           </footer>
           <BottomNav />
           <SWRegister />
