@@ -34,6 +34,10 @@ export default async function Home() {
             <Link href="/report" className="btn-primary !text-lg">{t('home.cta')}</Link>
             <Link href="/map" className="btn border border-white/50 text-white backdrop-blur hover:bg-white/10">{t('home.viewMap')}</Link>
           </div>
+          <p className="mt-6 inline-flex items-center gap-2.5 rounded-2xl bg-white py-1.5 pl-3 pr-2 text-xs font-semibold text-ink shadow-lg shadow-black/20">
+            {t('initiative.by')}
+            <Image src="/team-green.png" alt="Team G.R.E.E.N." width={294} height={160} className="h-9 w-auto md:h-11" />
+          </p>
         </div>
         <Credit photo={PHOTOS.hundru} label={`${t(PHOTOS.hundru.place)} · ${t('photo.by', { name: PHOTOS.hundru.artist, license: PHOTOS.hundru.license })}`} />
       </section>

@@ -7,6 +7,7 @@ import { LangProvider } from '@/components/I18n';
 import { BottomNav, Header } from '@/components/Nav';
 import SWRegister from '@/components/SWRegister';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SohraiBand } from '@/components/Ranchi';
 import { LogoMark } from '@/components/Logo';
 import { getWardFile } from '@/lib/wards';
@@ -45,6 +46,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="font-display text-lg text-sal-dark">{translate(lang, 'app.name')}</span>
                 </Link>
                 <p className="mt-2 font-display text-sal-dark">{translate(lang, 'footer.made')}</p>
+                <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
+                  {translate(lang, 'initiative.by')}
+                  <Image src="/team-green.png" alt="Team G.R.E.E.N." width={294} height={160} className="h-10 w-auto" />
+                </p>
                 <p className="mt-2 max-w-md text-xs text-muted">{translate(lang, 'disclaimer')}</p>
               </div>
               <nav>
