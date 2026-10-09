@@ -109,7 +109,7 @@ Deliveries show in `/admin` as "reporter email" / "reporter sms" and are retried
 
 ## Deploying (Railway)
 
-The app runs as one long-lived server with a persistent volume for the SQLite database and photos. The repo includes a `Dockerfile` and `railway.json` (health check on `/api/health`, restart on failure).
+The app runs as one long-lived server with a persistent volume for the SQLite database and photos. The repo includes a `Dockerfile` and `.railway/railway.ts` (Railway infrastructure as code: Dockerfile build, health check on `/api/health`, one instance with the `/data` volume, Singapore region). Preview changes with `railway config plan`, apply with `railway config apply`.
 
 1. On [railway.com](https://railway.com): **New Project → Deploy from GitHub repo** → pick this repo. Railway builds the `Dockerfile`.
 2. In the service, **add a Volume** with mount path **`/data`**. The image already points `DATABASE_PATH=/data/safai.db` and `UPLOAD_DIR=/data/uploads` there.

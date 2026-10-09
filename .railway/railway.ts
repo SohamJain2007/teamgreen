@@ -20,8 +20,7 @@ export default defineRailway(() => {
     deploy: {
       healthcheckPath: "/api/health",
       healthcheckTimeout: 120,
-      restartPolicyType: "ON_FAILURE",
-      restartPolicyMaxRetries: 10,
+      // Restart policy: Railway's default (restart on failure, up to 10 times).
       // SQLite has one writer: never run the old and new deployment side by side.
       overlapSeconds: 0,
     },
