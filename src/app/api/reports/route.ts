@@ -1,5 +1,6 @@
 import { json, fail } from '@/lib/api';
 import { CATEGORIES, MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYTES, RANCHI_CENTRE, type Category } from '@/lib/constants';
+import { normEmail, normPhone } from '@/lib/contact';
 import { haversineM } from '@/lib/geo';
 import { processPhoto } from '@/lib/image';
 import { addEvent, insertReport, newId } from '@/lib/reports';
@@ -32,6 +33,15 @@ export async function POST(req: Request) {
   const lng = Number(form.get('lng'));
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return fail('loc');
   if (haversineM(lat, lng, RANCHI_CENTRE.lat, RANCHI_CENTRE.lng) > MAX_DISTANCE_FROM_CENTRE_M) return fail('outside');
+
+  // At least one way to tell the reporter the spot was cleared. Both are validated; a filled-in but invalid one is an error.
+  const emailRaw = String(form.get('email') ?? '').trim();
+  const phoneRaw = String(form.get('phone') ?? '').trim();
+  const contactEmail = emailRaw ? normEmail(emailRaw) : null;
+  const contactPhone = phoneRaw ? normPhone(phoneRaw) : null;
+  if (emailRaw && !contactEmail) return fail('email');
+  if (phoneRaw && !contactPhone) return fail('phone');
+  if (!contactEmail && !contactPhone) return fail('contact');
 
   const acc = Number(form.get('accuracy'));
   const locSource = form.get('locSource') === 'pin' ? 'pin' : 'gps';
@@ -72,6 +82,8 @@ export async function POST(req: Request) {
     note,
     photo: photoKey,
     thumb: thumbKey,
+    contactEmail,
+    contactPhone,
   });
   addEvent(id, 'reported');
   return json({ id });

@@ -77,12 +77,23 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 
 const g = globalThis as unknown as { __safaiDb?: Database.Database };
 
+export const dbPath = () => DB_PATH;
+
+/** Flushes the WAL and closes the database (on shutdown). */
+export function closeDb() {
+  if (!g.__safaiDb) return;
+  g.__safaiDb.pragma('wal_checkpoint(TRUNCATE)');
+  g.__safaiDb.close();
+  g.__safaiDb = undefined;
+}
+
 export function getDb(): Database.Database {
   if (!g.__safaiDb) {
     fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
     const db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
+    db.pragma('busy_timeout = 5000');
     db.exec(SCHEMA);
     migrate(db);
     g.__safaiDb = db;
@@ -95,6 +106,9 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string][] = [
   ['reports', 'verified_at', 'INTEGER'],          // set when enough people nearby confirm the spot
   ['reports', 'cleared_by', 'TEXT'],              // admin | citizen
   ['reports', 'reopen_flags', 'INTEGER NOT NULL DEFAULT 0'], // "still dirty" votes since the last clear
+  ['reports', 'contact_email', 'TEXT'],            // reporter's, private: only used to tell them it was cleared
+  ['reports', 'contact_phone', 'TEXT'],            // 10-digit Indian mobile, same
+  ['notifications', 'kind', "TEXT NOT NULL DEFAULT 'complaint'"], // complaint (to officials) | cleared (to reporter)
 ];
 
 function migrate(db: Database.Database) {

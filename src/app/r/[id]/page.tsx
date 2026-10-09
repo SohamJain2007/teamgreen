@@ -35,7 +35,8 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const now = Date.now();
 
   const events = listEvents(r.id);
-  const deliveries = listNotifications(r.id);
+  // Only deliveries to officials are public; the reporter's own "cleared" notices are private.
+  const deliveries = listNotifications(r.id).filter((d) => d.kind !== 'cleared');
   const firstSent = events.find((e) => e.kind === 'notified')?.at ?? null;
   // Public journey of a complaint. "Sent" is the first successful (or test-mode) delivery to officials.
   const steps: { key: string; label: string; at: number | null; color: string; note?: string }[] = [

@@ -102,18 +102,25 @@ export function insertReport(r: {
   ward: number | null; wardAuto: boolean; category: Category | null; note: string | null;
   photo: string; thumb: string; status?: Status; afterPhoto?: string | null; afterThumb?: string | null;
   acknowledgedAt?: number | null; clearedAt?: number | null; upvotes?: number; isDemo?: boolean;
+  contactEmail?: string | null; contactPhone?: string | null;
 }) {
   getDb()
     .prepare(
       `INSERT INTO reports (id, created_at, lat, lng, accuracy, loc_source, ward, ward_auto, category, note, status,
-        photo, thumb, after_photo, after_thumb, acknowledged_at, cleared_at, upvotes, is_demo)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        photo, thumb, after_photo, after_thumb, acknowledged_at, cleared_at, upvotes, is_demo, contact_email, contact_phone)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .run(
       r.id, r.createdAt, r.lat, r.lng, r.accuracy, r.locSource, r.ward, r.wardAuto ? 1 : 0, r.category, r.note,
       r.status ?? 'reported', r.photo, r.thumb, r.afterPhoto ?? null, r.afterThumb ?? null,
-      r.acknowledgedAt ?? null, r.clearedAt ?? null, r.upvotes ?? 1, r.isDemo ? 1 : 0,
+      r.acknowledgedAt ?? null, r.clearedAt ?? null, r.upvotes ?? 1, r.isDemo ? 1 : 0, r.contactEmail ?? null, r.contactPhone ?? null,
     );
+}
+
+/** Reporter's private contact details. Kept out of Report so they can never leak into public pages or API responses. */
+export function getContact(id: string): { email: string | null; phone: string | null } {
+  const r = getDb().prepare('SELECT contact_email, contact_phone FROM reports WHERE id = ?').get(id) as Row | undefined;
+  return { email: r?.contact_email ?? null, phone: r?.contact_phone ?? null };
 }
 
 /** Returns the new count, or null if this client already voted. Upvotes ("I see this too") are confirmations. */

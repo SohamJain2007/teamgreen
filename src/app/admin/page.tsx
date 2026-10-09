@@ -12,6 +12,6 @@ export default async function AdminPage() {
   if (!(await isAdmin())) return <AdminLogin disabled={!adminPassword()} />;
   void dispatchPending(); // pick up anything queued while the server was idle
   const deliveries: Record<string, { channel: string; status: string; error: string | null }[]> = {};
-  for (const n of listNotifications()) (deliveries[n.report_id] ??= []).push({ channel: n.channel, status: n.status, error: n.error });
+  for (const n of listNotifications()) (deliveries[n.report_id] ??= []).push({ channel: n.kind === 'cleared' ? `reporter ${n.channel}` : n.channel, status: n.status, error: n.error });
   return <AdminPanel reports={listAll()} deliveries={deliveries} mode={notifyMode()} needed={VERIFY_CONFIRMATIONS} />;
 }

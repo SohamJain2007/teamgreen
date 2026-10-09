@@ -5,6 +5,7 @@ import { processPhoto } from '@/lib/image';
 import { getReport, markCleared } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
 import { getStorage } from '@/lib/storage';
+import { enqueueCleared } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 
@@ -33,5 +34,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   await st.put(after.photo, p.full);
   await st.put(after.thumb, p.thumb);
   markCleared(id, 'citizen', after);
+  enqueueCleared(id);
   return json({ ok: true });
 }

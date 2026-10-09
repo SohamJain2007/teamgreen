@@ -3,7 +3,7 @@ import { isAdmin } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { processPhoto } from '@/lib/image';
 import { addEvent, deleteReport, getReport, markCleared, maybeVerify, reopen } from '@/lib/reports';
-import { enqueueForReport, retryFailed } from '@/lib/notify';
+import { enqueueCleared, enqueueForReport, retryFailed } from '@/lib/notify';
 import { getStorage } from '@/lib/storage';
 import { MAX_UPLOAD_BYTES } from '@/lib/constants';
 
@@ -42,6 +42,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         await st.put(keys.thumb, p.thumb);
         markCleared(id, 'admin', keys);
       } else markCleared(id, 'admin');
+      enqueueCleared(id);
       break;
     }
     case 'reopen':

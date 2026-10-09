@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { normEmail, normPhone } from '@/lib/contact';
 import { useRouter } from 'next/navigation';
 import { useI18n } from './I18n';
 import LocationPicker from './LocationPicker';
@@ -33,6 +34,8 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   const [category, setCategory] = useState<Category | null>(null);
   const [note, setNote] = useState('');
   const [showNote, setShowNote] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +97,9 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   async function submit() {
     if (!photo) return setError(t('report.err.photo'));
     if (!loc) return setError(t('report.err.loc'));
+    if (phone.trim() && !normPhone(phone)) return setError(t('report.err.phone'));
+    if (email.trim() && !normEmail(email)) return setError(t('report.err.email'));
+    if (!phone.trim() && !email.trim()) return setError(t('report.err.contact'));
     setBusy(true);
     setError(null);
     const fd = new FormData();
@@ -105,13 +111,22 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     if (ward) fd.append('ward', String(ward));
     if (category) fd.append('category', category);
     if (note.trim()) fd.append('note', note.trim());
+    if (phone.trim()) fd.append('phone', phone.trim());
+    if (email.trim()) fd.append('email', email.trim());
     fd.append('website', honeyRef.current?.value ?? '');
     try {
       const r = await fetch('/api/reports', { method: 'POST', body: fd });
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.id) return router.push(`/r/${d.id}?new=1`);
       setError(
-        r.status === 429 ? t('report.err.rate') : d.error === 'outside' ? t('report.err.outside') : d.error === 'loc' ? t('report.err.loc') : t('report.err.generic'),
+        r.status === 429
+          ? t('report.err.rate')
+          : d.error === 'outside' ? t('report.err.outside')
+          : d.error === 'loc' ? t('report.err.loc')
+          : d.error === 'phone' ? t('report.err.phone')
+          : d.error === 'email' ? t('report.err.email')
+          : d.error === 'contact' ? t('report.err.contact')
+          : t('report.err.generic'),
       );
     } catch {
       setError(t('report.err.generic'));
@@ -299,6 +314,24 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
           + {t('report.note')} ({t('report.optional')})
         </button>
       )}
+
+      <fieldset className="card space-y-3 p-4">
+        <legend className="sr-only">{t('report.contact.title')}</legend>
+        <div>
+          <p className="text-sm font-semibold">{t('report.contact.title')}</p>
+          <p className="text-xs text-muted">{t('report.contact.hint')}</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm font-semibold">
+            {t('report.phone')}
+            <input className="field mt-1 font-normal" type="tel" inputMode="tel" autoComplete="tel" maxLength={16} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" />
+          </label>
+          <label className="block text-sm font-semibold">
+            {t('report.email')}
+            <input className="field mt-1 font-normal" type="email" inputMode="email" autoComplete="email" maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          </label>
+        </div>
+      </fieldset>
 
       {/* Honeypot: invisible to people, tempting to bots */}
       <input ref={honeyRef} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
