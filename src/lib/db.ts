@@ -2,7 +2,8 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'safai.db');
+// Vercel's filesystem is read-only except /tmp, so default there (data does not survive cold starts; see README).
+const DB_PATH = process.env.DATABASE_PATH || (process.env.VERCEL ? '/tmp/safai.db' : path.join(process.cwd(), 'data', 'safai.db'));
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS reports (

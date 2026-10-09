@@ -17,7 +17,7 @@ const SAFE_KEY = /^[A-Za-z0-9_-]+\.jpg$/;
 export const isSafeKey = (k: string) => SAFE_KEY.test(k);
 
 class LocalStorage implements PhotoStorage {
-  private dir = path.resolve(process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads'));
+  private dir = path.resolve(process.env.UPLOAD_DIR || (process.env.VERCEL ? '/tmp/uploads' : path.join(process.cwd(), 'uploads')));
   private p(key: string) {
     if (!isSafeKey(key)) throw new Error('bad storage key');
     return path.join(this.dir, key);
