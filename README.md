@@ -75,6 +75,17 @@ The code below is kept but **disabled** (`NOTIFY_MODE=off`, the default). Only s
 
 Each step is timestamped (`events` table), so the report page shows how long every stage took, and the rankings show average days to clear and **response time** (verified to first official action) per ward and zone.
 
+## Telling reporters their spot was cleared
+
+The report form asks for a **mobile number or email (at least one is required)**. It is stored privately with the report, never shown on public pages or in the API, and used once: when the spot is marked cleared (by an admin, or by a citizen's "It is clean now" photo), the reporter gets an email and/or SMS with the report link.
+
+This is controlled by `REPORTER_NOTIFY_MODE` (`off` / `dry-run` / `live`), separately from `NOTIFY_MODE`, so you can tell reporters without sending anything to officials.
+
+- **Email** uses the same `SMTP_*` and `MAIL_FROM` settings as complaints.
+- **SMS**: set `SMS_PROVIDER` to `fast2sms` (`FAST2SMS_API_KEY`, uses the "Quick SMS" route, simplest for Indian numbers) or `twilio` (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`). Indian carriers require DLT registration for most business SMS; check your provider's rules.
+
+Deliveries show in `/admin` as "reporter email" / "reporter sms" and are retried like complaints.
+
 ## Going live
 
 1. **Data**: check `data/wards.json` and `DATA_TODO.md`. Set `verified: true` on each ward whose councillor phone you have confirmed, because only those receive WhatsApp messages.
@@ -86,12 +97,30 @@ Each step is timestamped (`events` table), so the report page shows how long eve
 5. Set `NEXT_PUBLIC_SITE_URL` to the public https address, because links in messages use it.
 6. Consider telling RMC and the councillors before going live, so the messages are expected and not mistaken for spam.
 
-## Deploying
+## Deploying (Railway)
 
-SQLite and local photos need a **persistent disk**, so a plain Vercel serverless deployment will lose data. Options:
-1. **A VM/container with a volume** (Fly.io, Railway, Render with disk, a VPS): `npm run build && npm start`, mount a volume, set `DATABASE_PATH` and `UPLOAD_DIR` to it, plus `ADMIN_PASSWORD`, `IP_HASH_SALT`, `NEXT_PUBLIC_SITE_URL`. Serve over HTTPS (needed for geolocation, camera and the service worker).
-2. **Vercel**: swap SQLite for a hosted DB (Turso/libSQL, Neon Postgres: the SQL in `src/lib/reports.ts` and `db.ts` is small) and implement `S3Storage` (S3/R2/Vercel Blob). Rate limiting also needs a shared store there.
-Run a single instance (SQLite writer). Never run `npm run seed:demo` in production.
+The app runs as one long-lived server with a persistent volume for the SQLite database and photos. The repo includes a `Dockerfile` and `railway.json` (health check on `/api/health`, restart on failure).
+
+1. On [railway.com](https://railway.com): **New Project → Deploy from GitHub repo** → pick this repo. Railway builds the `Dockerfile`.
+2. In the service, **add a Volume** with mount path **`/data`**. The image already points `DATABASE_PATH=/data/safai.db` and `UPLOAD_DIR=/data/uploads` there.
+3. **Settings → Networking → Generate Domain** (or add your own domain). Railway serves it over HTTPS, which geolocation, the camera and the service worker need.
+4. **Variables**: at least `ADMIN_PASSWORD` (12+ chars), `IP_HASH_SALT` (long random string) and `NEXT_PUBLIC_SITE_URL` (the https address from step 3; it is baked in at build time, so redeploy after changing it). Then the message settings you want: `REPORTER_NOTIFY_MODE`, `SMTP_*`, `MAIL_FROM`, `SMS_PROVIDER` + keys, and `NOTIFY_MODE` for officials.
+5. Deploy. The log warns at startup about any of the required variables that are missing.
+
+What runs in the background on the server (`src/instrumentation.ts`, `src/lib/maintenance.ts`), every 5 minutes:
+- retries any email/SMS/WhatsApp that is pending or failed (up to 5 attempts),
+- writes a daily database snapshot to `/data/backups` and keeps the newest 7,
+- clears expired rate-limit rows.
+
+On shutdown the database is flushed and closed cleanly.
+
+**Keep it to one instance** (SQLite has a single writer, and a Railway volume attaches to one replica). Snapshots live on the same volume, so also turn on Railway's volume backups, or copy `/data/backups` elsewhere now and then. Never run `npm run seed:demo` in production.
+
+Rate limits and "one vote per person" use the client IP that the proxy appends to `X-Forwarded-For` (`TRUSTED_PROXY_HOPS`, default 1), so a faked header cannot dodge them.
+
+To try the production image locally: `podman build -t safairanchi . && podman run -p 3000:3000 -v ./data-local:/data:Z -e ADMIN_PASSWORD=... safairanchi` (or `docker`).
+
+**Vercel** is not supported for real use: its filesystem is temporary, so reports and photos would be lost. A Vercel build still starts (data goes to `/tmp`), which is only good for a preview.
 
 ## Status
 
@@ -103,7 +132,7 @@ Run a single instance (SQLite writer). Never run `npm run seed:demo` in producti
 - Location checks for confirming / cleaning use the phone's reported GPS, which a determined person can fake. Combined with one-vote-per-IP and rate limits this stops casual abuse, not organised fraud.
 - Ward detection is nearest *approximate* centroid unless you add boundaries.
 - Public tracker loads all reports (cap 2000) client-side, with no clustering or pagination.
-- No offline report queue (reports need a connection). No push notifications, no email.
+- No offline report queue (reports need a connection). No push notifications. Reporters get one email/SMS when their spot is cleared (if `REPORTER_NOTIFY_MODE` is on).
 - Rate limits are per salted IP hash, so users behind one carrier NAT share a bucket.
 - Admin is a single shared password with a 12 h cookie.
 - Demo photos are synthetic illustrations, not real places.

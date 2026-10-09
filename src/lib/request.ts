@@ -3,8 +3,13 @@ import { getDb } from './db';
 
 const SALT = process.env.IP_HASH_SALT || 'safairanchi-dev-salt';
 
+// Proxies append the address they saw to X-Forwarded-For, so the trustworthy entry is counted from the right; anything
+// further left was sent by the client and can be faked. TRUSTED_PROXY_HOPS = number of proxies in front of the app (Railway: 1).
+const HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS) || 1);
+
 export function clientId(req: Request): string {
-  const fwd = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const chain = (req.headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const fwd = chain.length ? chain[Math.max(0, chain.length - HOPS)] : null;
   const ip = fwd || req.headers.get('x-real-ip') || 'local';
   return crypto.createHash('sha256').update(SALT + ip).digest('hex').slice(0, 32);
 }
