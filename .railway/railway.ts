@@ -1,5 +1,5 @@
 // Railway infrastructure for SafaiRanchi. Preview with `railway config plan`, apply with `railway config apply`.
-// Variables (ADMIN_PASSWORD, IP_HASH_SALT, SMTP/SMS keys, ...) are set in Railway, never here.
+// Variables (ADMIN_PASSWORD for the first owner account, IP_HASH_SALT, SMTP/SMS keys, ...) are set in Railway, never here.
 import { defineRailway, github, project, service, volume } from "railway/iac";
 
 // Singapore: the closest Railway region to Ranchi.

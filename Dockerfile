@@ -26,5 +26,6 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/data ./data
 COPY --from=build /app/ml/model ./ml/model
 COPY --from=build /app/next.config.mjs ./
+COPY --from=build /app/scripts/admin.mjs ./scripts/admin.mjs
 EXPOSE 3000
 CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0"]

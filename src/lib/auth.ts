@@ -1,44 +1,38 @@
-import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
+import { SESSION_TTL_MS, createSession, deleteSession, sessionAdmin, type Admin } from './admins';
 
 const COOKIE = 'sr_admin';
-const TTL_MS = 12 * 60 * 60 * 1000;
 
-const MIN_PASSWORD_LENGTH = 12;
-
-/** Admin is enabled only when ADMIN_PASSWORD is set to a password of at least 12 characters. There is no default. */
-export function adminPassword(): string | null {
-  const pw = process.env.ADMIN_PASSWORD;
-  return pw && pw.length >= MIN_PASSWORD_LENGTH ? pw : null;
+/** The logged-in back-office account, or null. */
+export async function currentAdmin(): Promise<Admin | null> {
+  const token = (await cookies()).get(COOKIE)?.value;
+  return token ? sessionAdmin(token) : null;
 }
 
-const sign = (payload: string, pw: string) =>
-  crypto.createHmac('sha256', crypto.createHash('sha256').update('sr:' + pw).digest()).update(payload).digest('hex');
-
-export function checkPassword(input: string): boolean {
-  const pw = adminPassword();
-  if (!pw) return false;
-  const a = crypto.createHash('sha256').update(input).digest();
-  const b = crypto.createHash('sha256').update(pw).digest();
-  return crypto.timingSafeEqual(a, b);
+/** Logged in and allowed to work on reports (an owner-set password must be replaced first). */
+export async function requireAdmin(): Promise<Admin | null> {
+  const a = await currentAdmin();
+  return a && !a.mustChange ? a : null;
 }
 
-export function makeSessionValue(): string {
-  const pw = adminPassword()!;
-  const exp = String(Date.now() + TTL_MS);
-  return `${exp}.${sign(exp, pw)}`;
+export async function requireOwner(): Promise<Admin | null> {
+  const a = await requireAdmin();
+  return a?.role === 'owner' ? a : null;
 }
 
-export async function isAdmin(): Promise<boolean> {
-  const pw = adminPassword();
-  if (!pw) return false;
-  const v = (await cookies()).get(COOKIE)?.value;
-  if (!v) return false;
-  const [exp, sig] = v.split('.');
-  if (!exp || !sig || Number(exp) < Date.now()) return false;
-  const expected = sign(exp, pw);
-  return sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+export async function startSession(adminId: number): Promise<void> {
+  (await cookies()).set(COOKIE, createSession(adminId), {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: SESSION_TTL_MS / 1000,
+  });
 }
 
-export const ADMIN_COOKIE = COOKIE;
-export const ADMIN_TTL_S = TTL_MS / 1000;
+export async function endSession(): Promise<void> {
+  const jar = await cookies();
+  const token = jar.get(COOKIE)?.value;
+  if (token) deleteSession(token);
+  jar.delete(COOKIE);
+}

@@ -1,5 +1,6 @@
 import { json, fail } from '@/lib/api';
-import { isAdmin } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
+import { audit } from '@/lib/admins';
 import { getDb } from '@/lib/db';
 import { processPhoto } from '@/lib/image';
 import { addEvent, deleteReport, getReport, markCleared, maybeVerify, reopen } from '@/lib/reports';
@@ -10,13 +11,16 @@ import { MAX_UPLOAD_BYTES } from '@/lib/constants';
 export const runtime = 'nodejs';
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  if (!(await isAdmin())) return fail('unauthorized', 401);
+  const me = await requireAdmin();
+  if (!me) return fail('unauthorized', 401);
   const { id } = await ctx.params;
   const r = getReport(id);
   if (!r) return fail('not_found', 404);
   const form = await req.formData().catch(() => null);
   if (!form) return fail('bad_form');
   const action = String(form.get('action'));
+  // Deleting removes the evidence for good, so only owners can do it; staff can hide instead.
+  if (action === 'delete' && me.role !== 'owner') return fail('owner_only', 403);
   const db = getDb();
   const now = Date.now();
 
@@ -49,7 +53,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       reopen(id, 'admin');
       break;
     case 'verify':
-      if (maybeVerify(id, 0, true)) enqueueForReport(id);
+      if (!maybeVerify(id, 0, true)) return json({ ok: true, report: getReport(id) });
+      enqueueForReport(id);
       break;
     case 'retry':
       retryFailed(id);
@@ -63,9 +68,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       break;
     case 'delete':
       await deleteReport(id);
+      audit(me.id, 'delete', id);
       return json({ ok: true, deleted: true });
     default:
       return fail('bad_action');
   }
+  audit(me.id, action, id, action === 'clear' && form.get('after') instanceof File && (form.get('after') as File).size > 0 ? 'with photo' : null);
   return json({ ok: true, report: getReport(id) });
 }

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getT } from '@/lib/lang-server';
 import type { Key } from '@/lib/translations';
-import { isAdmin } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 import { getReport, listEvents, severity } from '@/lib/reports';
 import { complaintText, listNotifications, notifyMode, rmcEmail as getRmcEmail } from '@/lib/notify';
 import { assemblyMappingVerified, getMayor, getMp, getOfficerChain, getWard, getWardFile, mlaForWard } from '@/lib/wards';
@@ -29,7 +29,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const { id } = await params;
   const sp = await searchParams;
   const r = getReport(id);
-  const admin = await isAdmin();
+  const admin = !!(await requireAdmin());
   if (!r || (r.hidden && !admin)) notFound();
   const { t, lang } = await getT();
   const ward = r.ward != null ? getWard(r.ward) : undefined;

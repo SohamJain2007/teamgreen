@@ -29,3 +29,9 @@ export function rateLimit(key: string, max: number, windowMs: number): boolean {
   db.prepare('UPDATE rate_limits SET count = count + 1 WHERE key = ?').run(key);
   return true;
 }
+
+/** True if `key` has used up its window, without counting this call. Pair with rateLimit() to count only failures. */
+export function isLimited(key: string, max: number): boolean {
+  const row = getDb().prepare('SELECT count, reset_at FROM rate_limits WHERE key = ?').get(key) as { count: number; reset_at: number } | undefined;
+  return !!row && row.reset_at > Date.now() && row.count >= max;
+}

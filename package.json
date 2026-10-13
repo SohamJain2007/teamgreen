@@ -9,6 +9,7 @@
     "seed:demo": "tsx scripts/seed.ts",
     "demo:clear": "tsx scripts/clear-demo.ts",
     "icons": "node scripts/make-icons.mjs",
+    "admin": "node scripts/admin.mjs",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

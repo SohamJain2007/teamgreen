@@ -13,7 +13,7 @@ npm run dev        # http://localhost:3000  (3001 if 3000 is busy)
 ```
 
 The app starts with **no data**: every report is real. For local UI testing only, `npm run seed:demo` adds ~26 flagged DEMO reports and `npm run demo:clear` removes them. No API keys are needed to run it.
-Admin: `/admin`. It stays disabled until you set `ADMIN_PASSWORD` (12+ characters) in `.env`; there is no default password.
+Admin: `/admin`. It stays disabled until you set `ADMIN_PASSWORD` (12+ characters) in `.env`, which creates the first owner account (username `admin`); there is no default password. See [Back office](#back-office) for adding the rest of the team.
 
 Other scripts: `npm run build && npm start` (production; **the service worker only registers in production builds**), `npm run icons` (regenerate PWA icons), `npm run lint` (typecheck).
 
@@ -21,7 +21,8 @@ Other scripts: `npm run build && npm start` (production; **the service worker on
 
 | Var | Purpose |
 |---|---|
-| `ADMIN_PASSWORD` | Required (12+ characters). Admin is disabled without it, in dev and production. Generate one with `openssl rand -base64 18`. |
+| `ADMIN_PASSWORD` | Required (12+ characters) to create the first owner account when there are none. Ignored once any account exists. Generate one with `openssl rand -base64 18`. |
+| `ADMIN_USERNAME` | Username of that first owner (default `admin`). |
 | `IP_HASH_SALT` | Salt for hashing IPs (rate limiting, one-vote-per-person). Set a long random value. No raw IPs are stored. |
 | `UPLOAD_DIR` | Photo folder (default `./uploads`). |
 | `STORAGE_DRIVER` | `local` (default). `s3` is a stub, see below. |
@@ -57,6 +58,18 @@ See **`DATA_TODO.md`** for exactly what is unverified or missing.
 - **Representative pages** `/rep/mla-hatia`, `/rep/mp-ranchi`, `/rep/mayor`, ...: active dumps, total reports, average wait, wards
   covered, worst wards and recent reports. **Ward pages** show the same for the councillor. **Rankings** list every representative.
 - Data: `representatives` and `officerChain` in `data/wards.json`; each ward's `assembly` links it to an MLA (still a draft, see DATA_TODO.md).
+
+## Back office
+
+`/admin` has a named login for each person (a back office of 3 or 4 people works well), so every action is recorded against whoever did it.
+
+- **First owner**: on first start with no accounts, `ADMIN_PASSWORD` creates the owner `admin` (or `ADMIN_USERNAME`). Log in, then **My account → Change password** and **Team → Rename** to put your name on it.
+- **Adding people** (owners only): **Team → Add a person**, with a name, username, role and a temporary password (**Generate** makes one). Give them the temporary password privately; at first login they must choose their own before they can do anything.
+- **Roles**: *staff* can do everything with reports (verify, acknowledge, clear with an after photo, reopen, hide, restore, retry sending). *Owners* also manage the team and are the only ones who can **delete a report forever**. There is always at least one active owner.
+- **Leaving / lost phone**: **Deactivate** signs the person out everywhere at once and blocks their login; **Reset password** issues a new temporary one. Accounts are never deleted, so the activity history keeps its names.
+- **Activity**: every login and action, newest first, with who did it. Each report in the list also shows its last action and who took it. Public pages still only say "admin".
+- **Security**: passwords are scrypt-hashed (12+ characters, must not contain the username); sessions are stored server side for 12 hours and end on logout, password change or deactivation. Failed logins are limited to 10 per account and 20 per network per 15 minutes; successful logins are not counted, so an office sharing one connection is never locked out by its own logins.
+- **Locked out?** From the server shell (Railway: `railway ssh`): `node scripts/admin.mjs list`, `node scripts/admin.mjs reset <username>` (prints a new temporary password and reactivates the account) or `node scripts/admin.mjs add <username> "<Full name>" owner`. Locally: `npm run admin -- list`.
 
 ## Optional: sending complaints to officials (off)
 
@@ -114,7 +127,7 @@ The app runs as one long-lived server with a persistent volume for the SQLite da
 1. On [railway.com](https://railway.com): **New Project → Deploy from GitHub repo** → pick this repo. Railway builds the `Dockerfile`.
 2. In the service, **add a Volume** with mount path **`/data`**. The image already points `DATABASE_PATH=/data/safai.db` and `UPLOAD_DIR=/data/uploads` there.
 3. **Settings → Networking → Generate Domain** (or add your own domain). Railway serves it over HTTPS, which geolocation, the camera and the service worker need.
-4. **Variables**: at least `ADMIN_PASSWORD` (12+ chars), `IP_HASH_SALT` (long random string) and `NEXT_PUBLIC_SITE_URL` (the https address from step 3; it is baked in at build time, so redeploy after changing it). Then the message settings you want: `REPORTER_NOTIFY_MODE`, `SMTP_*`, `MAIL_FROM`, `SMS_PROVIDER` + keys, and `NOTIFY_MODE` for officials.
+4. **Variables**: at least `ADMIN_PASSWORD` (12+ chars, creates the first owner account), `IP_HASH_SALT` (long random string) and `NEXT_PUBLIC_SITE_URL` (the https address from step 3; it is baked in at build time, so redeploy after changing it). Then the message settings you want: `REPORTER_NOTIFY_MODE`, `SMTP_*`, `MAIL_FROM`, `SMS_PROVIDER` + keys, and `NOTIFY_MODE` for officials.
 5. Deploy. The log warns at startup about any of the required variables that are missing.
 
 What runs in the background on the server (`src/instrumentation.ts`, `src/lib/maintenance.ts`), every 5 minutes:
@@ -134,7 +147,7 @@ To try the production image locally: `podman build -t safairanchi . && podman ru
 
 ## Status
 
-**Done and tested end to end** (headless Chromium, Pixel 7 profile, plus API calls): photo → GPS → submit in 2 taps after the photo; duplicate prompt and upvote; ward auto-detect with manual override; denied-GPS pin fallback; map/list/filters; report page with timeline; admin acknowledge/clear with after-photo; before/after view; EXIF stripping; rate limit, auth and validation errors; Hindi toggle; production build.
+**Done and tested end to end** (headless Chromium, Pixel 7 profile, plus API calls): photo → GPS → submit in 2 taps after the photo; duplicate prompt and upvote; ward auto-detect with manual override; denied-GPS pin fallback; map/list/filters; report page with timeline; admin acknowledge/clear with after-photo; back-office accounts (owner/staff roles, forced first password change, deactivate/reset, activity log, login limits, recovery script); before/after view; EXIF stripping; rate limit, auth and validation errors; Hindi toggle; production build.
 
 **Stubbed / limited**
 - `S3Storage` is not implemented.
@@ -144,7 +157,7 @@ To try the production image locally: `podman build -t safairanchi . && podman ru
 - Public tracker loads all reports (cap 2000) client-side, with no clustering or pagination.
 - No offline report queue (reports need a connection). No push notifications. Reporters get one email/SMS when their spot is cleared (if `REPORTER_NOTIFY_MODE` is on).
 - Rate limits are per salted IP hash, so users behind one carrier NAT share a bucket.
-- Admin is a single shared password with a 12 h cookie.
+- Admin accounts have no two-factor login and no self-service "forgot password" (an owner resets it, or use `scripts/admin.mjs`).
 - Demo photos are synthetic illustrations, not real places.
 - Hindi strings were written by me and should be reviewed by a native speaker. Also check the Hindi wording of the unverified-data notices.
 

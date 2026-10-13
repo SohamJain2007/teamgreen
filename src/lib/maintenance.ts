@@ -1,11 +1,12 @@
 /**
  * Background upkeep for a long-running server (Railway): escalates uncleared complaints, retries undelivered messages, keeps a daily
- * database snapshot, and clears expired rate-limit rows. Started once from src/instrumentation.ts.
+ * database snapshot, and clears expired rate-limit rows and admin sessions. Started once from src/instrumentation.ts.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { closeDb, dbPath, getDb } from './db';
 import { dispatchPending, runEscalations } from './notify';
+import { adminEnabled, purgeExpiredSessions } from './admins';
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -38,6 +39,7 @@ async function tick() {
     runEscalations();
     await dispatchPending();
     getDb().prepare('DELETE FROM rate_limits WHERE reset_at < ?').run(Date.now());
+    purgeExpiredSessions();
     if (Date.now() - lastBackupAt() > DAY) console.log('[maintenance] backup written:', await backupNow());
   } catch (e) {
     console.error('[maintenance]', e);
@@ -46,7 +48,7 @@ async function tick() {
 
 function checkConfig() {
   const missing = [
-    !process.env.ADMIN_PASSWORD && 'ADMIN_PASSWORD (admin panel is disabled)',
+    !adminEnabled() && 'ADMIN_PASSWORD (no admin accounts yet, so /admin is disabled)',
     (!process.env.IP_HASH_SALT || process.env.IP_HASH_SALT === 'change-me-too') && 'IP_HASH_SALT (using a default salt)',
     !process.env.NEXT_PUBLIC_SITE_URL && 'NEXT_PUBLIC_SITE_URL (links in messages will point to localhost)',
   ].filter(Boolean);

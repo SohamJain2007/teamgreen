@@ -83,6 +83,39 @@ CREATE TABLE IF NOT EXISTS escalations (
   PRIMARY KEY (report_id, step)
 );
 
+-- Back-office accounts. The first owner is created from ADMIN_PASSWORD; owners add and manage the others in /admin.
+CREATE TABLE IF NOT EXISTS admins (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  username      TEXT NOT NULL UNIQUE,      -- lowercase
+  name          TEXT NOT NULL,
+  pw_hash       TEXT NOT NULL,             -- scrypt$<salt hex>$<hash hex>
+  role          TEXT NOT NULL DEFAULT 'staff', -- owner | staff
+  active        INTEGER NOT NULL DEFAULT 1,
+  must_change   INTEGER NOT NULL DEFAULT 0, -- 1 = set by an owner; the person must choose their own password at next login
+  created_at    INTEGER NOT NULL,
+  last_login_at INTEGER
+);
+
+-- Logged-in admin sessions. The cookie holds a random token; only its SHA-256 is stored.
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  token_hash TEXT PRIMARY KEY,
+  admin_id   INTEGER NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+
+-- Who did what in /admin. Private: public timelines only ever say "admin".
+CREATE TABLE IF NOT EXISTS admin_audit (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  at        INTEGER NOT NULL,
+  admin_id  INTEGER,
+  action    TEXT NOT NULL,
+  report_id TEXT,
+  detail    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_at ON admin_audit(at);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_report ON admin_audit(report_id, at);
+
 CREATE TABLE IF NOT EXISTS rate_limits (
   key      TEXT PRIMARY KEY,
   count    INTEGER NOT NULL,
