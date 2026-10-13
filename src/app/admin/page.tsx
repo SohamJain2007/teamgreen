@@ -5,6 +5,8 @@ import { adminEnabled, lastActionByReport, listAdmins, listAudit } from '@/lib/a
 import { listAll } from '@/lib/reports';
 import { VERIFY_CONFIRMATIONS } from '@/lib/constants';
 import { dispatchPending, listNotifications, notifyMode } from '@/lib/notify';
+import { getWardFile, getWards, getRepresentatives } from '@/lib/wards';
+import { escalationContacts, listEdits, readiness } from '@/lib/ward-edits';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Admin', robots: { index: false, follow: false } };
@@ -16,6 +18,17 @@ export default async function AdminPage() {
   void dispatchPending(); // pick up anything queued while the server was idle
   const deliveries: Record<string, { channel: string; status: string; error: string | null }[]> = {};
   for (const n of listNotifications()) (deliveries[n.report_id] ??= []).push({ channel: [n.kind === 'complaint' ? null : n.kind, n.role, n.channel].filter(Boolean).join(' '), status: n.status, error: n.error });
+  const file = getWardFile();
+  const data = {
+    wards: getWards(),
+    escalation: escalationContacts(),
+    officials: file.rmcOfficials,
+    reps: getRepresentatives(),
+    helpline: { phone: file.meta.rmcHelpline.phone, email: file.meta.rmcHelpline.email },
+    assemblyVerified: file.representatives ? file.representatives.assemblyMappingVerified : null,
+    edits: listEdits(),
+    readiness: readiness(),
+  };
   return (
     <AdminPanel
       me={me}
@@ -26,6 +39,7 @@ export default async function AdminPage() {
       admins={me.role === 'owner' ? listAdmins() : []}
       activity={listAudit()}
       lastActions={lastActionByReport()}
+      data={data}
     />
   );
 }

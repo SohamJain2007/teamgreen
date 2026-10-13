@@ -116,6 +116,16 @@ CREATE TABLE IF NOT EXISTS admin_audit (
 CREATE INDEX IF NOT EXISTS idx_admin_audit_at ON admin_audit(at);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_report ON admin_audit(report_id, at);
 
+-- Ward / official data edited in /admin, applied on top of data/wards.json (which is baked into the image, so edits must
+-- live on the volume). key: ward:<n> | escalation:<role> | official:<role> | rep:<slug> | meta:helpline | meta:assembly.
+-- patch: JSON of only the fields that differ from the file.
+CREATE TABLE IF NOT EXISTS data_overrides (
+  key        TEXT PRIMARY KEY,
+  patch      TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  updated_by INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS rate_limits (
   key      TEXT PRIMARY KEY,
   count    INTEGER NOT NULL,

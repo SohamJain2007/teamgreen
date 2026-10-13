@@ -9,9 +9,10 @@ import type { Admin, AuditEntry } from '@/lib/admins';
 import type { Key } from '@/lib/translations';
 import Link from 'next/link';
 import { ActivityLog, ChangePassword, LogoutButton, RoleBadge, TeamManager } from './AdminTeam';
+import AdminData, { type AdminDataProps } from './AdminData';
 
 type Tab = 'open' | 'flagged' | 'cleared' | 'all';
-type Section = 'reports' | 'activity' | 'team' | 'account';
+type Section = 'reports' | 'data' | 'activity' | 'team' | 'account';
 
 export function AdminLogin({ disabled }: { disabled: boolean }) {
   const { t } = useI18n();
@@ -86,9 +87,10 @@ type Props = {
   admins: Admin[];
   activity: AuditEntry[];
   lastActions: Record<string, AuditEntry>;
+  data: AdminDataProps;
 };
 
-export default function AdminPanel({ me, reports, deliveries, mode, needed, admins, activity, lastActions }: Props) {
+export default function AdminPanel({ me, reports, deliveries, mode, needed, admins, activity, lastActions, data }: Props) {
   const { t, lang } = useI18n();
   const router = useRouter();
   const [section, setSection] = useState<Section>('reports');
@@ -126,12 +128,13 @@ export default function AdminPanel({ me, reports, deliveries, mode, needed, admi
         </div>
       </div>
       <nav className="flex flex-wrap gap-2 border-b border-line pb-3" aria-label={t('admin.title')}>
-        {(['reports', 'activity', ...(me.role === 'owner' ? ['team' as const] : []), 'account'] as const).map((k) => (
+        {(['reports', 'data', 'activity', ...(me.role === 'owner' ? ['team' as const] : []), 'account'] as const).map((k) => (
           <button key={k} aria-current={section === k ? 'page' : undefined} onClick={() => setSection(k)} className={`chip ${section === k ? 'chip-on' : ''}`}>
             {t(`admin.section.${k}`)}
           </button>
         ))}
       </nav>
+      {section === 'data' && <AdminData {...data} />}
       {section === 'activity' && <ActivityLog entries={activity} />}
       {section === 'team' && me.role === 'owner' && <TeamManager me={me} admins={admins} />}
       {section === 'account' && <ChangePassword />}

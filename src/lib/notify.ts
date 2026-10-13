@@ -108,15 +108,15 @@ function resolve(r: Report, role: NotifyRole): { channel: Channel; to: string } 
     const to = email ?? councillorMobile(w.councillorPhone);
     const channel: Channel = email ? 'email' : 'sms';
     if (!to) return { channel, label: `ward ${w.wardNumber}`, skip: 'no councillor email or valid mobile' };
-    if (!w.verified && !unverifiedOk) return { channel, label: to, skip: `ward ${w.wardNumber} contact not verified (set verified:true in wards.json)` };
+    if (!w.verified && !unverifiedOk) return { channel, label: to, skip: `ward ${w.wardNumber} contact not checked (Admin → Ward data)` };
     return { channel, to };
   }
   const c = getEscalationContact(role);
   const email = normEmail(c?.email);
   const to = email ?? normPhone(c?.phone);
   const channel: Channel = email ? 'email' : 'sms';
-  if (!to) return { channel, label: role, skip: `no email or mobile for ${role} in wards.json "escalation"` };
-  if (!c!.verified && !unverifiedOk) return { channel, label: to, skip: `${role} contact not verified (set verified:true in wards.json "escalation")` };
+  if (!to) return { channel, label: role, skip: `no email or mobile for ${role} (Admin → Ward data)` };
+  if (!c!.verified && !unverifiedOk) return { channel, label: to, skip: `${role} contact not checked (Admin → Ward data)` };
   return { channel, to };
 }
 

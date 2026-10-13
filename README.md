@@ -31,6 +31,9 @@ Other scripts: `npm run build && npm start` (production; **the service worker on
 
 ## Updating ward and official data
 
+**Easiest: `/admin` → Ward data.** Any admin can correct councillor names, mobiles and emails, zones, MLA seats, ward map locations and the "checked" flag, plus the escalation contacts (Commissioner, SDO, DC), officials, MP/MLAs and the helpline. The top of that page lists what still stops complaints from reaching officials (sending mode, email/SMS setup, missing or unchecked contacts, wards with no map location).
+Edits are stored in the database (`data_overrides`, on the volume) and applied over `data/wards.json`, so they take effect immediately and survive redeploys. Only values that differ from the file are kept; **Undo all edits** on a card goes back to the file. Every change is in **Activity** with its old and new value. **Download wards.json with all edits** gives the merged file, as a backup or to commit to the repo (after which the stored edits match the file and can be undone).
+
 All of it lives in **`data/wards.json`**: `meta` (helpline, map centre), `rmcOfficials` (Mayor, Deputy Mayor, Commissioner, health officer) and `wards`.
 Edit by hand; changes are picked up without a rebuild when the file is on disk. Ward fields: `wardNumber, zone, name, area, councillorName, councillorPhone, lat, lng, centroidSource, source, verified`.
 Set `verified: true` only after checking an official source; until then the UI shows a "Data not yet verified" badge. Councillors, phones and areas come from the 2026 RMC ward member list (53 wards); each ward also has an `area` field with the full area description.
@@ -114,7 +117,7 @@ Deliveries show in `/admin` as "reporter email" / "reporter sms" and are retried
 
 ## Going live
 
-1. **Data**: check `data/wards.json` and `DATA_TODO.md`. Set `verified: true` on each ward whose councillor contact you have confirmed, because only those are contacted. Add `"councillorEmail"` to a ward to email that councillor instead of sending an SMS.
+1. **Data**: open `/admin` → Ward data and work through its checklist (see also `DATA_TODO.md`). Set `verified: true` on each ward whose councillor contact you have confirmed, because only those are contacted. Add `"councillorEmail"` to a ward to email that councillor instead of sending an SMS.
 2. **Email**: create an SMTP account (e.g. Gmail with an app password, Zoho Mail, Brevo, Amazon SES) and fill `SMTP_*`, `MAIL_FROM`. Use a domain you own for `MAIL_FROM` so mail is not marked as spam.
 3. **SMS**: set `SMS_PROVIDER` and its keys (see "Telling reporters their spot was cleared"). Councillors without an email get the complaint by SMS.
 4. Set `NOTIFY_MODE=dry-run`, deploy, file one test report, confirm it from a second phone, and check `/admin` and the server log. Then switch to `NOTIFY_MODE=live`.
@@ -148,7 +151,7 @@ To try the production image locally: `podman build -t safairanchi . && podman ru
 
 ## Status
 
-**Done and tested end to end** (headless Chromium, Pixel 7 profile, plus API calls): photo → GPS → submit in 2 taps after the photo; duplicate prompt and upvote; ward auto-detect with manual override; Ranchi-only reporting (outside, location off, server check); map/list/filters; report page with timeline; admin acknowledge/clear with after-photo; back-office accounts (owner/staff roles, forced first password change, deactivate/reset, activity log, login limits, recovery script); before/after view; EXIF stripping; rate limit, auth and validation errors; Hindi toggle; production build.
+**Done and tested end to end** (headless Chromium, Pixel 7 profile, plus API calls): photo → GPS → submit in 2 taps after the photo; duplicate prompt and upvote; ward auto-detect with manual override; Ranchi-only reporting (outside, location off, server check); map/list/filters; report page with timeline; admin acknowledge/clear with after-photo; back-office accounts (owner/staff roles, forced first password change, deactivate/reset, activity log, login limits, recovery script); ward data editor (validation, survives restart, undo, export); before/after view; EXIF stripping; rate limit, auth and validation errors; Hindi toggle; production build.
 
 **Stubbed / limited**
 - `S3Storage` is not implemented.

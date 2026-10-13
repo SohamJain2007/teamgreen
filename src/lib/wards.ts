@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { haversineM, pointInGeometry } from './geo';
+import { getDb } from './db';
 import type { Zone } from './constants';
 
 export type Ward = {
@@ -39,7 +40,7 @@ export type Representative = {
   phone: string | null;
 };
 export type OfficerRole = { role: string; note: string; name: string | null };
-type WardFile = {
+export type WardFile = {
   meta: { readme: string; rmcHelpline: { phone: string; email: string; verified: boolean }; centre: { lat: number; lng: number } };
   rmcOfficials: Official[];
   representatives?: { source: string; mp: Representative; mlas: Representative[]; assemblyMappingVerified: boolean };
@@ -54,8 +55,15 @@ type Boundary = { wardNumber: number; geometry: { type: string; coordinates: any
 const WARDS_PATH = path.join(process.cwd(), 'data', 'wards.json');
 const BOUNDS_PATH = path.join(process.cwd(), 'data', 'ward-boundaries.geojson');
 
-// Re-read when the file changes, so editing wards.json needs no rebuild.
-const cache: { wards?: { m: number; v: WardFile }; bounds?: { m: number; v: Boundary[] | null } } = {};
+// Re-read when the file changes, so editing wards.json needs no rebuild, and when an admin edit is saved. The edit counter is
+// on globalThis because Next.js can load this module more than once (one copy per route bundle) in the same process.
+const cache: { wards?: { m: number; ver: number; v: WardFile }; raw?: { m: number; v: WardFile }; bounds?: { m: number; v: Boundary[] | null } } = {};
+const g = globalThis as unknown as { __wardEditsVersion?: number };
+const editsVersion = () => g.__wardEditsVersion ?? 0;
+/** Call after changing data_overrides so every copy of this module reloads. */
+export function wardEditsChanged() {
+  g.__wardEditsVersion = editsVersion() + 1;
+}
 
 function mtime(p: string): number {
   try {
@@ -65,12 +73,49 @@ function mtime(p: string): number {
   }
 }
 
+/** data/wards.json exactly as shipped, without admin edits. */
+export function loadRaw(): WardFile {
+  const m = mtime(WARDS_PATH);
+  if (!cache.raw || cache.raw.m !== m) cache.raw = { m, v: JSON.parse(fs.readFileSync(WARDS_PATH, 'utf8')) as WardFile };
+  return cache.raw.v;
+}
+
+/** The file with admin edits (data_overrides) applied. */
 function load(): WardFile {
   const m = mtime(WARDS_PATH);
-  if (!cache.wards || cache.wards.m !== m) {
-    cache.wards = { m, v: JSON.parse(fs.readFileSync(WARDS_PATH, 'utf8')) as WardFile };
-  }
+  const ver = editsVersion();
+  if (!cache.wards || cache.wards.m !== m || cache.wards.ver !== ver) cache.wards = { m, ver, v: applyOverrides(loadRaw()) };
   return cache.wards.v;
+}
+
+function applyOverrides(file: WardFile): WardFile {
+  const v = structuredClone(file);
+  let rows: { key: string; patch: string }[] = [];
+  try {
+    rows = getDb().prepare('SELECT key, patch FROM data_overrides').all() as typeof rows;
+  } catch (e) {
+    console.error('[wards] could not read admin edits:', e);
+  }
+  for (const { key, patch } of rows) {
+    const p = JSON.parse(patch);
+    const [kind, id] = key.split(':');
+    if (kind === 'ward') {
+      const w = v.wards.find((x) => x.wardNumber === Number(id));
+      if (w) Object.assign(w, p);
+    } else if (kind === 'escalation') {
+      const esc = (v.escalation ??= {});
+      const role = id as EscalationRole;
+      esc[role] = { title: role, name: null, email: null, phone: null, verified: false, ...esc[role], ...p };
+    } else if (kind === 'official') {
+      const o = v.rmcOfficials.find((x) => x.role === id);
+      if (o) Object.assign(o, p);
+    } else if (kind === 'rep' && v.representatives) {
+      const r = v.representatives.mp.slug === id ? v.representatives.mp : v.representatives.mlas.find((x) => x.slug === id);
+      if (r) Object.assign(r, p);
+    } else if (key === 'meta:helpline') Object.assign(v.meta.rmcHelpline, p);
+    else if (key === 'meta:assembly' && v.representatives) v.representatives.assemblyMappingVerified = !!p.verified;
+  }
+  return v;
 }
 
 function loadBoundaries(): Boundary[] | null {

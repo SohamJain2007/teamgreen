@@ -1,5 +1,8 @@
 # DATA_TODO: what you need to verify or fill in
 
+> **You can now fix all of this in `/admin` → Ward data**, which also shows a live checklist of what is still missing. This file
+> is the background: where the data came from and the known doubts.
+
 > **2026-10-09:** the project owner confirmed the 2026 ward list (councillors, phones, areas), the Mayor/Deputy Mayor/Commissioner
 > entries and the helpline, so all of those are now `verified: true`. Items below about councillors/zones are kept for history.
 
