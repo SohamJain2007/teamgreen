@@ -8,9 +8,13 @@ import { photoUrl } from '@/lib/format';
 import { CATEGORIES, type Category, type Status } from '@/lib/constants';
 import { StatusBadge } from './ui';
 import { compress } from '@/lib/client-media';
+import { distanceFromRanchiM, inRanchi } from '@/lib/geo';
+import Link from 'next/link';
 
 type WardOpt = { n: number; name: string | null; zone: string | null };
 type Loc = { lat: number; lng: number; accuracy: number | null; source: 'gps' | 'pin' };
+type Fix = { lat: number; lng: number; accuracy: number | null };
+type LocState = 'loading' | 'ok' | 'denied' | 'error' | 'outside';
 type Nearby = { id: string; thumb: string; category: Category | null; status: Status; upvotes: number; distanceM: number };
 type WardRes = { ward: number | null; method: 'polygon' | 'centroid' | 'none' };
 
@@ -23,8 +27,10 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
 
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [loc, setLoc] = useState<Loc | null>(null);
-  const [locState, setLocState] = useState<'loading' | 'ok' | 'denied' | 'error'>('loading');
+  const [loc, setLoc] = useState<Loc | null>(null); // the spot: GPS, or a pin the person moved
+  const [me, setMe] = useState<Fix | null>(null); // where the phone is; must be in Ranchi to report
+  const [locState, setLocState] = useState<LocState>('loading');
+  const [awayKm, setAwayKm] = useState(0);
   const [showMap, setShowMap] = useState(false);
   const [wardRes, setWardRes] = useState<WardRes | null>(null);
   const [wardChoice, setWardChoice] = useState<number | null>(null); // manual override
@@ -39,25 +45,26 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ask for GPS straight away so it is ready by the time the photo is taken.
-  useEffect(() => {
-    if (!('geolocation' in navigator)) {
-      setLocState('error');
-      setShowMap(true);
-      return;
-    }
+  // Ask for GPS straight away: it shows at once whether the person is in Ranchi, and is ready by the time the photo is taken.
+  const locate = useCallback(() => {
+    if (!('geolocation' in navigator)) return setLocState('error');
+    setLocState('loading');
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setLoc({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy, source: 'gps' });
+        const { latitude: lat, longitude: lng, accuracy } = p.coords;
+        if (!inRanchi(lat, lng, accuracy)) {
+          setAwayKm(Math.round(distanceFromRanchiM(lat, lng) / 1000));
+          return setLocState('outside');
+        }
+        setMe({ lat, lng, accuracy });
+        setLoc({ lat, lng, accuracy, source: 'gps' });
         setLocState('ok');
       },
-      (e) => {
-        setLocState(e.code === 1 ? 'denied' : 'error');
-        setShowMap(true);
-      },
+      (e) => setLocState(e.code === 1 ? 'denied' : 'error'),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
   }, []);
+  useEffect(locate, [locate]);
 
   // Ward + duplicate lookup whenever the location changes.
   useEffect(() => {
@@ -96,7 +103,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
 
   async function submit() {
     if (!photo) return setError(t('report.err.photo'));
-    if (!loc) return setError(t('report.err.loc'));
+    if (!loc || !me) return setError(t('report.err.loc'));
     if (phone.trim() && !normPhone(phone)) return setError(t('report.err.phone'));
     if (email.trim() && !normEmail(email)) return setError(t('report.err.email'));
     if (!phone.trim() && !email.trim()) return setError(t('report.err.contact'));
@@ -108,6 +115,9 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     fd.append('lng', String(loc.lng));
     if (loc.accuracy) fd.append('accuracy', String(loc.accuracy));
     fd.append('locSource', loc.source);
+    fd.append('meLat', String(me.lat));
+    fd.append('meLng', String(me.lng));
+    if (me.accuracy) fd.append('meAccuracy', String(me.accuracy));
     if (ward) fd.append('ward', String(ward));
     if (category) fd.append('category', category);
     if (note.trim()) fd.append('note', note.trim());
@@ -118,11 +128,17 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
       const r = await fetch('/api/reports', { method: 'POST', body: fd });
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.id) return router.push(`/r/${d.id}?new=1`);
+      if (d.error === 'not_in_ranchi') {
+        setAwayKm(Number(d.km) || 0);
+        setLocState('outside');
+        setBusy(false);
+        return;
+      }
       setError(
         r.status === 429
           ? t('report.err.rate')
           : d.error === 'outside' ? t('report.err.outside')
-          : d.error === 'loc' ? t('report.err.loc')
+          : d.error === 'loc' || d.error === 'need_location' ? t('report.err.loc')
           : d.error === 'phone' ? t('report.err.phone')
           : d.error === 'email' ? t('report.err.email')
           : d.error === 'contact' ? t('report.err.contact')
@@ -154,6 +170,33 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     </>
   );
 
+  // ---------- Not in Ranchi, or no location: nothing to report with ----------
+  if (locState === 'outside' || locState === 'denied' || locState === 'error') {
+    const outside = locState === 'outside';
+    return (
+      <div className="mx-auto max-w-md space-y-4">
+        <div className="card space-y-3 p-5 text-center" role="alert">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-palash-soft text-palash-dark">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z" />
+              <circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+          </div>
+          <h1 className="text-2xl">{t(outside ? 'report.outside.title' : 'report.needLoc.title')}</h1>
+          <p>{outside ? t('report.outside.body', { km: awayKm.toLocaleString('en-IN') }) : t('report.needLoc.body')}</p>
+          {locState === 'denied' && <p className="text-sm font-semibold text-palash-dark">{t('report.needLoc.denied')}</p>}
+          {outside && <p className="text-sm text-muted">{t('report.outside.hint')}</p>}
+        </div>
+        <button onClick={locate} className="btn-primary w-full">
+          {t(outside ? 'report.outside.retry' : 'report.needLoc.retry')}
+        </button>
+        <Link href="/map" className="btn-ghost w-full">
+          {t('report.outside.map')}
+        </Link>
+      </div>
+    );
+  }
+
   // ---------- Step 1: photo ----------
   if (!preview) {
     return (
@@ -183,22 +226,18 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     const msg =
       locState === 'loading'
         ? t('report.locating')
-        : locState === 'denied'
-          ? t('report.locDenied')
-          : locState === 'error'
-            ? t('report.locError')
-            : loc?.source === 'pin'
-              ? t('report.locPinned')
-              : t('report.locked', { m: Math.round(loc?.accuracy ?? 0) });
+        : loc?.source === 'pin'
+          ? t('report.locPinned')
+          : t('report.locked', { m: Math.round(loc?.accuracy ?? 0) });
     return (
       <div className="flex items-center gap-2 text-sm">
-        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${locState === 'ok' || loc?.source === 'pin' ? 'bg-sal' : locState === 'loading' ? 'animate-pulse bg-haldi' : 'bg-palash'}`} />
-        <span className="font-medium">{loc?.source === 'pin' && locState !== 'loading' ? t('report.locPinned') : msg}</span>
+        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${locState === 'ok' ? 'bg-sal' : 'animate-pulse bg-haldi'}`} />
+        <span className="font-medium">{msg}</span>
       </div>
     );
   }
 
-  const canSubmit = !!photo && !!loc && !busy;
+  const canSubmit = !!photo && !!loc && !!me && !busy;
   const wardObj = wards.find((w) => w.n === ward);
   const dup = !dupDismissed && nearby.length > 0 ? nearby[0] : null;
 
@@ -217,19 +256,18 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
       <div className="card space-y-2 p-3">
         <div className="flex items-center justify-between gap-2">
           <LocStatus />
-          <button onClick={() => setShowMap((v) => !v)} className="text-sm font-semibold text-jharna-dark underline">
-            {t('report.adjust')}
-          </button>
+          {loc && (
+            <button onClick={() => setShowMap((v) => !v)} className="text-sm font-semibold text-jharna-dark underline">
+              {t('report.adjust')}
+            </button>
+          )}
         </div>
-        {showMap && (
+        {showMap && loc && (
           <>
             <p className="text-xs text-muted">{t('report.pinHint')}</p>
             <LocationPicker
               value={loc}
-              onChange={(lat, lng) => {
-                setLoc({ lat, lng, accuracy: null, source: 'pin' });
-                setLocState('ok');
-              }}
+              onChange={(lat, lng) => setLoc({ lat, lng, accuracy: null, source: 'pin' })}
             />
           </>
         )}

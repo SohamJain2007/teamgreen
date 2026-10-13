@@ -43,7 +43,8 @@ See **`DATA_TODO.md`** for exactly what is unverified or missing.
 - Next.js 15 (App Router) + TypeScript + Tailwind; SQLite via `better-sqlite3` (schema auto-created in `src/lib/db.ts`); photos via `sharp`.
 - `src/lib/storage.ts`: photo storage interface (`LocalStorage` now; `S3Storage` is a stub to implement). Reports only store keys.
 - Uploads are re-encoded server-side (auto-rotate, max 1280 px, JPEG, **all EXIF dropped**) and compressed client-side first for 4G. Stored GPS is only the browser geolocation or map pin the user chose.
-- Abuse: per-IP (salted hash) rate limits in SQLite (6 reports/h, votes/flags/login limits), honeypot field, 10 MB cap, 3 spam flags auto-hide a report, location must be within 30 km of Ranchi.
+- Abuse: per-IP (salted hash) rate limits in SQLite (6 reports/h, votes/flags/login limits), honeypot field, 10 MB cap, 3 spam flags auto-hide a report.
+- **Ranchi only**: reporting needs the phone's location, and the phone must be within 30 km of the city centre (`MAX_DISTANCE_FROM_CENTRE_M`; a coarse fix gets up to 5 km of slack for its accuracy). Anyone further away sees "You are not in Ranchi" with their distance before taking a photo; with location off they are asked to turn it on. The server checks the phone's position too, and the spot itself must also be in Ranchi. People in Ranchi can still move the pin to adjust the spot.
 - Duplicates: a new report within 30 m of an open one offers "Add your voice" (upvote).
 - i18n: `src/lib/translations.ts` (English + Hindi), choice stored in the `sr_lang` cookie.
 - Map: Leaflet + OpenStreetMap tiles (no keys). The OSM tile server is for light use; for real traffic use a tile provider or your own server (change `TILE_URL` in `MapViewImpl.tsx`).
@@ -147,12 +148,12 @@ To try the production image locally: `podman build -t safairanchi . && podman ru
 
 ## Status
 
-**Done and tested end to end** (headless Chromium, Pixel 7 profile, plus API calls): photo → GPS → submit in 2 taps after the photo; duplicate prompt and upvote; ward auto-detect with manual override; denied-GPS pin fallback; map/list/filters; report page with timeline; admin acknowledge/clear with after-photo; back-office accounts (owner/staff roles, forced first password change, deactivate/reset, activity log, login limits, recovery script); before/after view; EXIF stripping; rate limit, auth and validation errors; Hindi toggle; production build.
+**Done and tested end to end** (headless Chromium, Pixel 7 profile, plus API calls): photo → GPS → submit in 2 taps after the photo; duplicate prompt and upvote; ward auto-detect with manual override; Ranchi-only reporting (outside, location off, server check); map/list/filters; report page with timeline; admin acknowledge/clear with after-photo; back-office accounts (owner/staff roles, forced first password change, deactivate/reset, activity log, login limits, recovery script); before/after view; EXIF stripping; rate limit, auth and validation errors; Hindi toggle; production build.
 
 **Stubbed / limited**
 - `S3Storage` is not implemented.
 - Email needs an SMTP account and SMS an SMS provider account. Until configured, verified reports are only logged (`NOTIFY_MODE`).
-- Location checks for confirming / cleaning use the phone's reported GPS, which a determined person can fake. Combined with one-vote-per-IP and rate limits this stops casual abuse, not organised fraud.
+- Location checks (Ranchi-only reporting, confirming, cleaning) use the phone's reported GPS, which a determined person can fake. Combined with one-vote-per-IP and rate limits this stops casual abuse, not organised fraud.
 - Ward detection is nearest *approximate* centroid unless you add boundaries.
 - Public tracker loads all reports (cap 2000) client-side, with no clustering or pagination.
 - No offline report queue (reports need a connection). No push notifications. Reporters get one email/SMS when their spot is cleared (if `REPORTER_NOTIFY_MODE` is on).

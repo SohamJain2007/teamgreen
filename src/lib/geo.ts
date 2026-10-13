@@ -1,3 +1,5 @@
+import { MAX_DISTANCE_FROM_CENTRE_M, RANCHI_CENTRE } from './constants';
+
 export function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -41,3 +43,15 @@ export function distanceTo(target: { lat: number; lng: number }, lat: unknown, l
   return haversineM(la, ln, target.lat, target.lng);
 }
 
+
+/** Metres from the centre of Ranchi. */
+export const distanceFromRanchiM = (lat: number, lng: number) => haversineM(lat, lng, RANCHI_CENTRE.lat, RANCHI_CENTRE.lng);
+
+/**
+ * Whether a phone's reported position is in Ranchi. A coarse fix (e.g. wifi-based on a laptop) gets the benefit of its
+ * accuracy radius, capped at 5 km, so someone at the edge of the city is not turned away by a blurry reading.
+ */
+export function inRanchi(lat: number, lng: number, accuracyM?: number | null): boolean {
+  const slack = Math.min(Math.max(Number(accuracyM) || 0, 0), 5000);
+  return distanceFromRanchiM(lat, lng) - slack <= MAX_DISTANCE_FROM_CENTRE_M;
+}

@@ -1,7 +1,7 @@
 import { json, fail } from '@/lib/api';
-import { CATEGORIES, MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYTES, RANCHI_CENTRE, type Category } from '@/lib/constants';
+import { CATEGORIES, MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYTES, type Category } from '@/lib/constants';
 import { normEmail, normPhone } from '@/lib/contact';
-import { haversineM } from '@/lib/geo';
+import { distanceFromRanchiM, inRanchi } from '@/lib/geo';
 import { processPhoto } from '@/lib/image';
 import { addEvent, insertReport, newId, recordReporterVote } from '@/lib/reports';
 import { clientId, rateLimit } from '@/lib/request';
@@ -32,7 +32,12 @@ export async function POST(req: Request) {
   const lat = Number(form.get('lat'));
   const lng = Number(form.get('lng'));
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return fail('loc');
-  if (haversineM(lat, lng, RANCHI_CENTRE.lat, RANCHI_CENTRE.lng) > MAX_DISTANCE_FROM_CENTRE_M) return fail('outside');
+  // Reports are only for people in Ranchi: the phone's own GPS position must be in the city, wherever the pin is.
+  const meLat = Number(form.get('meLat'));
+  const meLng = Number(form.get('meLng'));
+  if (form.get('meLat') == null || !Number.isFinite(meLat) || !Number.isFinite(meLng)) return fail('need_location');
+  if (!inRanchi(meLat, meLng, Number(form.get('meAccuracy')))) return json({ error: 'not_in_ranchi', km: Math.round(distanceFromRanchiM(meLat, meLng) / 1000) }, 403);
+  if (distanceFromRanchiM(lat, lng) > MAX_DISTANCE_FROM_CENTRE_M) return fail('outside');
 
   // At least one way to tell the reporter the spot was cleared. Both are validated; a filled-in but invalid one is an error.
   const emailRaw = String(form.get('email') ?? '').trim();
