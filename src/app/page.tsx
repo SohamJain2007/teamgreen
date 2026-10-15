@@ -4,7 +4,7 @@ import { getT } from '@/lib/lang-server';
 import { computeStats, listPublic } from '@/lib/reports';
 import { getWard, getWardFile } from '@/lib/wards';
 import { fmtNum } from '@/lib/format';
-import { ReportCard, Stat } from '@/components/ui';
+import { ReportCard } from '@/components/ui';
 import { SalLeaf } from '@/components/Ranchi';
 import { GALLERY, PHOTOS, PLEDGE_SLIDES, type Photo } from '@/lib/photos';
 import PhotoSlider from '@/components/PhotoSlider';
@@ -16,7 +16,9 @@ export default async function Home() {
   const reports = listPublic();
   const s = computeStats(reports);
   const hasDemo = reports.some((r) => r.isDemo);
-  const helpline = getWardFile().meta.rmcHelpline.phone;
+  const wardFile = getWardFile();
+  const helpline = wardFile.meta.rmcHelpline.phone;
+  const wardCount = wardFile.wards.length;
 
   return (
     <div className="space-y-8">
@@ -42,26 +44,69 @@ export default async function Home() {
         <Credit photo={PHOTOS.hundru} label={`${t(PHOTOS.hundru.place)} · ${t('photo.by', { name: PHOTOS.hundru.artist, license: PHOTOS.hundru.license })}`} />
       </section>
 
-      <section className="grid grid-cols-3 gap-2">
-        <Stat label={t('home.stat.open')} value={s.open} />
-        <Stat label={t('home.stat.cleared')} value={s.cleared} />
-        <Stat label={t('home.stat.avgDays')} value={fmtNum(s.avgDaysToClear)} />
-      </section>
+      {s.total ? (
+        <section className="grid grid-cols-3 gap-2 md:gap-3">
+          <StatLink href="/map" tone="palash" value={s.open} label={t('home.stat.open')} />
+          <StatLink href="/map?status=cleared" tone="sal" value={s.cleared} label={t('home.stat.cleared')} />
+          <StatLink href="/leaderboard?sort=days" tone="jharna" value={fmtNum(s.avgDaysToClear)} label={t('home.stat.avgDays')} />
+        </section>
+      ) : (
+        // A brand-new site would show "0 · 0 · —"; say what people get instead until the first report is in.
+        <section className="grid grid-cols-3 gap-2 md:gap-3">
+          <StatLink href="/leaderboard" tone="sal" value={wardCount} label={t('home.fact.wards')} />
+          <StatLink href="/report" tone="jharna" value={t('home.fact.timeV')} label={t('home.fact.time')} />
+          <StatLink href="/report" tone="palash" value={t('home.fact.freeV')} label={t('home.fact.free')} />
+        </section>
+      )}
       {hasDemo && <p className="-mt-5 rounded-xl bg-haldi-soft p-2.5 text-center text-sm font-semibold text-haldi-text">{t('home.demoNote')}</p>}
 
       <section>
         <h2 className="section-title mb-3">{t('home.how.title')}</h2>
         <ol className="grid gap-3 md:grid-cols-3">
-          {([1, 2, 3] as const).map((n) => (
-            <li key={n} className="card flex gap-3 p-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-sal-soft font-display text-xl text-sal-dark">{n}</span>
+          {STEPS.map((step, i) => (
+            <li key={i} className="card relative flex gap-4 p-4 md:flex-col md:gap-3 md:p-5">
+              <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${step.tone}`}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  {step.icon.map((d) => <path key={d} d={d} />)}
+                </svg>
+              </span>
               <div>
-                <p className="text-lg font-bold">{t(`home.how.${n}.t`)}</p>
-                <p className="text-sm text-muted">{t(`home.how.${n}.d`)}</p>
+                <p className="text-lg font-bold">
+                  <span className="mr-1.5 font-display text-sm text-muted">{i + 1}.</span>
+                  {t(`home.how.${(i + 1) as 1 | 2 | 3}.t`)}
+                </p>
+                <p className="text-sm text-muted">{t(`home.how.${(i + 1) as 1 | 2 | 3}.d`)}</p>
               </div>
             </li>
           ))}
         </ol>
+      </section>
+
+
+      <section>
+        <div className="mb-3 flex items-end justify-between">
+          <h2 className="section-title">{t('home.recent')}</h2>
+          <Link href="/map" className="text-sm font-semibold text-jharna-dark underline">{t('home.viewMap')}</Link>
+        </div>
+        {reports.length === 0 && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-sal/30 bg-sal-soft/40 px-5 py-8 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-white text-sal shadow-sm">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                {STEPS[0].icon.map((d) => <path key={d} d={d} />)}
+              </svg>
+            </span>
+            <div>
+              <p className="font-display text-lg">{t('home.empty.t')}</p>
+              <p className="mx-auto max-w-sm text-sm text-muted">{t('home.empty.d')}</p>
+            </div>
+            <Link href="/report" className="btn-primary">{t('home.cta')}</Link>
+          </div>
+        )}
+        <ul className="grid gap-2 md:grid-cols-2">
+          {reports.slice(0, 6).map((r) => (
+            <li key={r.id} className="min-w-0"><ReportCard r={r} wardName={r.ward != null ? getWard(r.ward)?.name : null} /></li>
+          ))}
+        </ul>
       </section>
 
       <section>
@@ -88,27 +133,6 @@ export default async function Home() {
         </ul>
       </section>
 
-      <section>
-        <div className="mb-3 flex items-end justify-between">
-          <h2 className="section-title">{t('home.recent')}</h2>
-          <Link href="/map" className="text-sm font-semibold text-jharna-dark underline">{t('home.viewMap')}</Link>
-        </div>
-        {reports.length === 0 && (
-          <div className="card flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-display text-lg">{t('home.empty.t')}</p>
-              <p className="text-sm text-muted">{t('home.empty.d')}</p>
-            </div>
-            <Link href="/report" className="btn-primary">{t('home.cta')}</Link>
-          </div>
-        )}
-        <ul className="grid gap-2 md:grid-cols-2">
-          {reports.slice(0, 6).map((r) => (
-            <li key={r.id} className="min-w-0"><ReportCard r={r} wardName={r.ward != null ? getWard(r.ward)?.name : null} /></li>
-          ))}
-        </ul>
-      </section>
-
       <section className="relative overflow-hidden rounded-3xl bg-jharna-dark px-5 pb-12 pt-10 text-white md:px-10 md:py-16">
         <PhotoSlider
           slides={PLEDGE_SLIDES.map((ph) => ({
@@ -128,6 +152,26 @@ export default async function Home() {
 
       <p className="text-sm text-muted">{t('alsoRmc')}: <a href={`tel:${helpline}`} className="font-semibold underline">{helpline}</a></p>
     </div>
+  );
+}
+
+const STEPS = [
+  // camera
+  { tone: 'bg-sal-soft text-sal-dark', icon: ['M3 8.5A2 2 0 015 6.5h2.2L8.8 4h6.4l1.6 2.5H19a2 2 0 012 2V18a2 2 0 01-2 2H5a2 2 0 01-2-2z', 'M12 16.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z'] },
+  // map pin
+  { tone: 'bg-jharna-soft text-jharna-dark', icon: ['M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z', 'M12 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z'] },
+  // eye
+  { tone: 'bg-palash-soft text-palash-dark', icon: ['M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'] },
+];
+
+const TONE = { sal: 'text-sal-dark', jharna: 'text-jharna-dark', palash: 'text-palash' } as const;
+
+function StatLink({ href, tone, value, label }: { href: string; tone: keyof typeof TONE; value: React.ReactNode; label: string }) {
+  return (
+    <Link href={href} className="card group block px-2 py-3.5 text-center transition hover:-translate-y-0.5 hover:border-sal/40 hover:shadow-md md:py-5">
+      <p className={`font-display text-2xl leading-none md:text-4xl ${TONE[tone]}`}>{value}</p>
+      <p className="mt-1.5 text-xs font-semibold leading-tight text-muted md:text-sm">{label}</p>
+    </Link>
   );
 }
 

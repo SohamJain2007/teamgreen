@@ -69,13 +69,3 @@ export function ReportCard({ r, wardName }: { r: Report; wardName?: string | nul
     </Link>
   );
 }
-
-export function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="card p-3 text-center">
-      <p className="font-display text-3xl leading-none text-sal-dark">{value}</p>
-      <p className="mt-1 text-xs font-semibold text-muted">{label}</p>
-      {sub && <p className="text-[11px] text-muted">{sub}</p>}
-    </div>
-  );
-}
