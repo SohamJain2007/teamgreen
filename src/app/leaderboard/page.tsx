@@ -28,10 +28,13 @@ export default async function Leaderboard({ searchParams }: { searchParams: Prom
   const { t } = await getT();
   const reports = listPublic();
   const zones = zoneStatsAll(reports).sort((a, b) => cmp(sort)(a.stats, b.stats));
-  const wards = wardStatsAll(reports).sort((a, b) => cmp(sort)(a.stats, b.stats));
+  const allWards = wardStatsAll(reports).sort((a, b) => cmp(sort)(a.stats, b.stats));
+  // Wards with no reports would be rows of zeros; list them compactly under the table instead.
+  const wards = allWards.filter((w) => w.stats.total);
+  const quiet = allWards.filter((w) => !w.stats.total).sort((a, b) => a.ward.wardNumber - b.ward.wardNumber);
   const maxOpen = Math.max(1, ...wards.map((w) => w.stats.open));
   const hasDemo = reports.some((r) => r.isDemo);
-  const anyUnverified = wards.some((w) => !w.ward.verified);
+  const anyUnverified = allWards.some((w) => !w.ward.verified);
   const reps = getRepresentatives()
     .map((rep) => {
       const nums = new Set(wardsOfRep(rep).map((w) => w.wardNumber));
@@ -42,23 +45,28 @@ export default async function Leaderboard({ searchParams }: { searchParams: Prom
 
   const Row = ({ label, href, s, i, bar }: { label: React.ReactNode; href?: string; s: Stats; i: number; bar?: number }) => (
     <tr className="border-t border-line">
-      <td className="py-2 pl-3 pr-2 text-muted">{s.total ? i + 1 : ''}</td>
-      <td className="py-2 pr-2 font-semibold">{href ? <Link href={href} className="hover:underline">{label}</Link> : label}</td>
-      <td className="py-2 pr-2">
+      <td className="hidden py-2 pl-3 pr-2 text-muted sm:table-cell">{s.total ? i + 1 : ''}</td>
+      <td className="py-2 pl-3 pr-1.5 font-semibold [overflow-wrap:break-word] sm:pl-0 sm:pr-2">{href ? <Link href={href} className="hover:underline">{label}</Link> : label}</td>
+      <td className="py-2 pr-1.5 sm:pr-2">
         <div className="flex items-center gap-2">
-          <span className="w-6 text-right font-semibold">{s.open}</span>
+          <span className="w-5 text-right font-semibold sm:w-6">{s.open}</span>
           {bar != null && <span className="hidden h-2 flex-1 rounded-full bg-line sm:block"><span className="block h-2 rounded-full bg-palash" style={{ width: `${(s.open / bar) * 100}%` }} /></span>}
         </div>
       </td>
-      <td className="py-2 pr-2">{s.cleared}</td>
-      <td className="py-2 pr-2">{s.total ? fmtNum(s.avgDaysToClear) : '—'}</td>
-      <td className="py-2 pr-2">{s.verified ? fmtNum(s.avgDaysToRespond) : '—'}</td>
-      <td className="py-2 pr-3">{s.total ? `${Math.round((rate(s) ?? 0) * 100)}%` : t('lb.noReports')}</td>
+      <td className="py-2 pr-1.5 sm:pr-2">{s.cleared}</td>
+      <td className="py-2 pr-1.5 sm:pr-2">{s.total ? fmtNum(s.avgDaysToClear) : '—'}</td>
+      <td className="py-2 pr-1.5 sm:pr-2">{s.verified ? fmtNum(s.avgDaysToRespond) : '—'}</td>
+      <td className="py-2 pr-2 sm:pr-3">{s.total ? `${Math.round((rate(s) ?? 0) * 100)}%` : <span title={t('lb.noReports')}>—</span>}</td>
     </tr>
   );
   const Head = () => (
-    <thead className="text-left text-xs uppercase tracking-wide text-muted">
-      <tr><th className="py-2 pl-3">#</th><th /><th>{t('lb.open')}</th><th>{t('lb.cleared')}</th><th>{t('lb.avg')}</th><th>{t('lb.respond')}</th><th className="pr-3">{t('lb.rate')}</th></tr>
+    // Headers wrap onto two lines so the whole table fits a phone screen without sideways scrolling.
+    <thead className="text-left align-bottom text-[11px] uppercase leading-tight text-muted sm:text-xs sm:tracking-wide">
+      <tr>
+        <th className="hidden py-2 pl-3 sm:table-cell">#</th><th className="pl-3 sm:pl-0" />
+        <th className="py-2 pr-1.5 sm:pr-2">{t('lb.open')}</th><th className="pr-1.5 sm:pr-2">{t('lb.cleared')}</th><th className="pr-1.5 sm:pr-2">{t('lb.avg')}</th>
+        <th className="pr-1.5 sm:pr-2">{t('lb.respond')}</th><th className="pr-2 sm:pr-3">{t('lb.rate')}</th>
+      </tr>
     </thead>
   );
 
@@ -103,7 +111,7 @@ export default async function Leaderboard({ searchParams }: { searchParams: Prom
       <section>
         <h2 className="section-title mb-2">{t('lb.zones')}</h2>
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
+          <table className="w-full text-sm">
             <Head />
             <tbody>{zones.map((z, i) => <Row key={z.zone} i={i} s={z.stats} label={t(`zone.${z.zone}`)} />)}</tbody>
           </table>
@@ -112,17 +120,35 @@ export default async function Leaderboard({ searchParams }: { searchParams: Prom
 
       <section>
         <h2 className="section-title mb-2">{t('lb.wards')}</h2>
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
+        {wards.length > 0 && <div className="card overflow-x-auto">
+          <table className="w-full text-sm">
             <Head />
             <tbody>
               {wards.map((w, i) => (
                 <Row key={w.ward.wardNumber} i={i} s={w.stats} bar={maxOpen} href={`/ward/${w.ward.wardNumber}`}
-                  label={<>{t('ward.title', { n: w.ward.wardNumber })}{w.ward.name ? <span className="font-normal text-muted"> · {w.ward.name}</span> : null}</>} />
+                  label={<>{t('ward.title', { n: w.ward.wardNumber })}{w.ward.name ? <span className="block font-normal text-muted sm:inline"><span className="hidden sm:inline"> · </span>{w.ward.name}</span> : null}</>} />
               ))}
             </tbody>
           </table>
-        </div>
+        </div>}
+        {quiet.length > 0 && (
+          <details className="group mt-3" open={wards.length === 0}>
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-2 text-sm font-semibold text-jharna-dark [&::-webkit-details-marker]:hidden">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition group-open:rotate-90" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+              {t('lb.quiet', { n: quiet.length })}
+            </summary>
+            <ul className="mt-1 flex flex-wrap gap-2">
+              {quiet.map((w) => (
+                <li key={w.ward.wardNumber}>
+                  <Link href={`/ward/${w.ward.wardNumber}`} className="chip hover:border-sal/40">
+                    <span className="font-semibold">{w.ward.wardNumber}</span>
+                    {w.ward.name && <span className="ml-1 text-muted">{w.ward.name}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </section>
 
       <p className="text-xs text-muted">{t('lb.note')} {hasDemo && <strong>{t('lb.demo')}</strong>}</p>

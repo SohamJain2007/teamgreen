@@ -303,6 +303,7 @@ const en = {
     'Numbers reflect reports made through this app, so wards with more active users show more reports. Read them as a conversation starter, not a verdict.',
   'lb.demo': 'Includes demo data.',
   'lb.noReports': 'No reports',
+  'lb.quiet': '{n} wards with no reports yet',
 
   'admin.title': 'Admin',
   'admin.password': 'Password',
@@ -790,6 +791,7 @@ const hi: Dict = {
     'ये आँकड़े इस ऐप से हुई रिपोर्टों पर आधारित हैं, इसलिए जहाँ ज़्यादा लोग ऐप इस्तेमाल करते हैं वहाँ रिपोर्टें ज़्यादा दिखती हैं। इन्हें बातचीत की शुरुआत मानें, फ़ैसला नहीं।',
   'lb.demo': 'इसमें डेमो डेटा शामिल है।',
   'lb.noReports': 'कोई रिपोर्ट नहीं',
+  'lb.quiet': '{n} वार्ड, जिनमें अभी कोई रिपोर्ट नहीं',
 
   'admin.title': 'एडमिन',
   'admin.password': 'पासवर्ड',

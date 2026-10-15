@@ -59,25 +59,27 @@ export default async function RepPage({ params }: { params: Promise<{ slug: stri
       {draft && <p className="flex items-center gap-2 text-xs text-haldi-text"><UnverifiedBadge /> {t('acc.draftMap')}</p>}
 
       <section>
-        <h2 className="mb-1 font-mono text-xs font-bold uppercase tracking-widest text-muted">{t('acc.worstWards')}</h2>
+        <h2 className="mb-1 text-xs font-bold uppercase tracking-widest text-muted">{t('acc.worstWards')}</h2>
         {worst.length ? <WorstWards t={t} rows={worst} /> : <p className="text-sm text-muted">{t('acc.noOpen')}</p>}
       </section>
 
       <section>
-        <h2 className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-muted">{t('acc.recent')}</h2>
+        <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">{t('acc.recent')}</h2>
         {recent.length ? <RecentList t={t} items={recent} /> : <p className="text-sm text-muted">{t('home.empty.t')}</p>}
       </section>
 
       <section>
-        <h2 className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-muted">{t('acc.wardList', { n: wards.length })}</h2>
-        <p className="text-sm leading-relaxed">
-          {wards.map((w, i) => (
-            <span key={w.wardNumber}>
-              {i > 0 && ', '}
-              <a href={`/ward/${w.wardNumber}`} className="text-jharna-dark underline">{w.wardNumber}{w.name ? ` ${w.name}` : ''}</a>
-            </span>
+        <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">{t('acc.wardList', { n: wards.length })}</h2>
+        <ul className="flex flex-wrap gap-2">
+          {wards.map((w) => (
+            <li key={w.wardNumber}>
+              <a href={`/ward/${w.wardNumber}`} className="chip hover:border-sal/40">
+                <span className="font-semibold">{w.wardNumber}</span>
+                {w.name && <span className="ml-1 text-muted">{w.name}</span>}
+              </a>
+            </li>
           ))}
-        </p>
+        </ul>
       </section>
     </div>
   );

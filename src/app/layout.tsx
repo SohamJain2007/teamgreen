@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   applicationName: 'SafaiRanchi',
   appleWebApp: { capable: true, title: 'SafaiRanchi', statusBarStyle: 'default' },
   icons: { apple: '/icons/apple-touch-icon.png' },
+  openGraph: { type: 'website', siteName: 'SafaiRanchi', locale: 'en_IN' },
+  twitter: { card: 'summary_large_image' },
 };
 export const viewport: Viewport = { themeColor: '#1A7A50', width: 'device-width', initialScale: 1 };
 
@@ -54,10 +56,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
               <nav>
                 <p className="font-semibold text-ink">{translate(lang, 'footer.explore')}</p>
-                <ul className="mt-2 space-y-1.5 text-muted">
+                <ul className="mt-1 text-muted">
                   {(['report', 'map', 'leaderboard'] as const).map((r) => (
                     <li key={r}>
-                      <Link href={`/${r}`} className="hover:text-sal-dark">
+                      <Link href={`/${r}`} className="inline-block py-1.5 hover:text-sal-dark">
                         {translate(lang, r === 'report' ? 'nav.report' : r === 'map' ? 'nav.map' : 'nav.rankings')}
                       </Link>
                     </li>
@@ -66,12 +68,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </nav>
               <div>
                 <p className="font-semibold text-ink">{translate(lang, 'footer.help')}</p>
-                <ul className="mt-2 space-y-1.5 text-muted">
+                <ul className="mt-1 text-muted">
                   <li>
                     {translate(lang, 'footer.helpline')}:{' '}
-                    <a href={`tel:${helpline}`} className="font-semibold text-sal-dark hover:underline">{helpline}</a>
+                    <a href={`tel:${helpline}`} className="inline-block py-1.5 font-semibold text-sal-dark hover:underline">{helpline}</a>
                   </li>
-                  <li><Link href="/credits" className="hover:text-sal-dark">{translate(lang, 'footer.credits')}</Link></li>
+                  <li><Link href="/credits" className="inline-block py-1.5 hover:text-sal-dark">{translate(lang, 'footer.credits')}</Link></li>
                 </ul>
               </div>
             </div>

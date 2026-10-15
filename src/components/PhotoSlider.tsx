@@ -24,7 +24,7 @@ export default function PhotoSlider({ slides, interval = 1500 }: { slides: Slide
           </div>
         ))}
       </div>
-      <div className="absolute bottom-3 left-1/2 z-[2] flex -translate-x-1/2 gap-1.5 md:left-10 md:translate-x-0">
+      <div className="absolute bottom-1.5 left-1/2 z-[2] flex -translate-x-1/2 md:left-9 md:translate-x-0">
         {slides.map((s, n) => (
           <button
             key={s.src}
@@ -32,8 +32,11 @@ export default function PhotoSlider({ slides, interval = 1500 }: { slides: Slide
             onClick={() => setI(n)}
             aria-label={s.alt}
             aria-current={n === i}
-            className={`h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'}`}
-          />
+            className="group grid h-6 place-items-center px-[3px]"
+          >
+            {/* Small visible dot inside a 24 px tap target */}
+            <span className={`block h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-white' : 'w-1.5 bg-white/50 group-hover:bg-white/80'}`} />
+          </button>
         ))}
       </div>
       <a

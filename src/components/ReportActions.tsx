@@ -155,20 +155,27 @@ export default function ReportActions(p: Props) {
         <div className="mx-auto max-w-2xl">
           {msg?.bar ? <div className="mb-2"><Msg ok={msg.ok} text={msg.text} /></div> : <p className="mb-2 text-center text-xs text-muted" suppressHydrationWarning>{p.summary}</p>}
           <input ref={cleanRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => markClean(e.target.files?.[0])} />
-          <div className="grid grid-cols-2 gap-2">
+          {/* The cleanup / still-dirty action is the one we want people to take; flagging stays available but quiet. */}
+          <div className="flex gap-2">
             {cleared ? (
-              <button onClick={stillDirty} disabled={dirtyVoted || busy != null} className="btn bg-palash text-white hover:bg-palash-dark">
+              <button onClick={stillDirty} disabled={dirtyVoted || busy != null} className="btn flex-1 bg-palash text-white hover:bg-palash-dark">
                 {busy === 'dirty' ? t('r.locating') : dirtyVoted ? t('r.dirty.voted') : t('r.dirty.btn')}
               </button>
             ) : (
-              <button onClick={() => cleanRef.current?.click()} disabled={busy != null} className="btn bg-sal text-white hover:bg-sal-dark">
+              <button onClick={() => cleanRef.current?.click()} disabled={busy != null} className="btn-primary flex-1">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16 10" /></svg>
                 {busy === 'clean' ? t('r.locating') : t('btn.verifyCleanup')}
               </button>
             )}
-            <button onClick={flag} disabled={flagged} className="btn bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
-              {flagged ? t('btn.flagged') : t('btn.flag')}
+            <button
+              onClick={flag}
+              disabled={flagged}
+              title={flagged ? t('btn.flagged') : t('btn.flag')}
+              className="btn-ghost !px-3.5 text-muted hover:!border-palash/40 hover:!bg-palash-soft/50 hover:text-palash-dark sm:!px-5"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={flagged ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
+              {/* Icon only on phones so the main action gets the width; the label is still read out and shown as a tooltip */}
+              <span className="sr-only sm:not-sr-only">{flagged ? t('btn.flagged') : t('btn.flag')}</span>
             </button>
           </div>
         </div>

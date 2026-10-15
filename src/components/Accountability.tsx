@@ -90,7 +90,7 @@ export function WorstWards({ t, rows }: { t: T; rows: { n: number; name: string 
             <span className={`w-6 text-center font-display text-lg ${i < 3 ? 'text-palash' : 'text-muted/50'}`}>{i + 1}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-semibold">{t('ward.title', { n: w.n })}{w.name ? ` · ${w.name}` : ''}</span>
-              {w.zone && <span className="font-mono text-xs text-muted">{t(`zone.${w.zone}` as Key)}</span>}
+              {w.zone && <span className="text-xs text-muted">{t(`zone.${w.zone}` as Key)}</span>}
             </span>
             <span className="font-display text-lg text-muted">{w.open}</span>
           </Link>
