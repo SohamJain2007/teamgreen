@@ -9,5 +9,5 @@ export const metadata: Metadata = { title: 'Public tracker' };
 export default async function MapPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const wards = getWards().map((w) => ({ n: w.wardNumber, name: w.name, zone: w.zone }));
-  return <Tracker reports={listPublic()} wards={wards} initial={{ ward: sp.ward ?? '', status: sp.status ?? '' }} />;
+  return <Tracker reports={listPublic()} wards={wards} initial={{ type: sp.type ?? '', ward: sp.ward ?? '', status: sp.status ?? '' }} />;
 }

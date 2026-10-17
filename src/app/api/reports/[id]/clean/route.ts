@@ -16,6 +16,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const r = getReport(id);
   if (!r || r.hidden) return fail('not_found', 404);
   if (r.status === 'cleared') return fail('already_cleared', 409);
+  // Nobody can un-cut a tree: only officials (through our team) record what was done about it.
+  if (r.type === 'tree') return fail('official_only', 403);
   const form = await req.formData().catch(() => null);
   if (!form) return fail('bad_form');
   const dist = distanceTo(r, form.get('lat'), form.get('lng'));

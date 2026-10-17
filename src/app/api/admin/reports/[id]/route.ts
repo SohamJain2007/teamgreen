@@ -6,7 +6,7 @@ import { processPhoto } from '@/lib/image';
 import { addEvent, deleteReport, getReport, markCleared, maybeVerify, reopen } from '@/lib/reports';
 import { enqueueCleared, enqueueForReport, retryFailed } from '@/lib/notify';
 import { getStorage } from '@/lib/storage';
-import { MAX_UPLOAD_BYTES } from '@/lib/constants';
+import { MAX_UPLOAD_BYTES, ROADS } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +56,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       if (!maybeVerify(id, 0, true)) return json({ ok: true, report: getReport(id) });
       enqueueForReport(id);
       break;
+    case 'set_road': {
+      // Our team corrects who owns the road; a verified pothole then also goes to the right office.
+      const road = String(form.get('road'));
+      if (r.type !== 'pothole' || !(ROADS as readonly string[]).includes(road)) return fail('bad_road');
+      if (road === r.road) return json({ ok: true, report: r });
+      db.prepare('UPDATE reports SET road=? WHERE id=?').run(road, id);
+      if (r.verifiedAt) enqueueForReport(id);
+      audit(me.id, 'set_road', id, `${r.road ?? 'none'} → ${road}`);
+      return json({ ok: true, report: getReport(id) });
+    }
     case 'retry':
       retryFailed(id);
       break;

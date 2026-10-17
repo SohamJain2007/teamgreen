@@ -2,7 +2,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from './I18n';
-import { StatusBadge, DemoBadge } from './ui';
+import { StatusBadge, DemoBadge, TypeTag } from './ui';
+import { titleKey } from '@/lib/labels';
+import { REPORT_TYPES, ROADS, type ReportType } from '@/lib/constants';
 import { daysBetween, fmtAgo, photoUrl } from '@/lib/format';
 import type { Report } from '@/lib/reports';
 import type { Admin, AuditEntry } from '@/lib/admins';
@@ -95,19 +97,22 @@ export default function AdminPanel({ me, reports, deliveries, mode, needed, admi
   const router = useRouter();
   const [section, setSection] = useState<Section>('reports');
   const [tab, setTab] = useState<Tab>('open');
+  const [typeFilter, setTypeFilter] = useState<ReportType | ''>('');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
   const inTab = (k: Tab, r: Report) =>
     k === 'open' ? r.status !== 'cleared' && !r.hidden : k === 'cleared' ? r.status === 'cleared' : k === 'flagged' ? r.hidden || r.spamFlags > 0 : true;
-  const shown = reports.filter((r) => inTab(tab, r));
+  const ofType = reports.filter((r) => !typeFilter || r.type === typeFilter);
+  const shown = ofType.filter((r) => inTab(tab, r));
 
-  async function act(id: string, action: string, after?: File | null) {
+  async function act(id: string, action: string, after?: File | null, extra?: Record<string, string>) {
     if (action === 'delete' && !confirm(t('admin.confirmDelete'))) return;
     setBusy(id);
     const fd = new FormData();
     fd.append('action', action);
     if (after) fd.append('after', after);
+    for (const [k, v] of Object.entries(extra ?? {})) fd.append(k, v);
     const r = await fetch(`/api/admin/reports/${id}`, { method: 'POST', body: fd }).catch(() => null);
     setBusy(null);
     setMsg(r?.ok ? t('admin.saved') : t('admin.failed'));
@@ -146,9 +151,18 @@ export default function AdminPanel({ me, reports, deliveries, mode, needed, admi
           <div className="flex flex-wrap gap-2" role="tablist">
             {(['open', 'flagged', 'cleared', 'all'] as const).map((k) => (
               <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`chip ${tab === k ? 'chip-on' : ''}`}>
-                {t(`admin.tab.${k}`)} ({reports.filter((r) => inTab(k, r)).length})
+                {t(`admin.tab.${k}`)} ({ofType.filter((r) => inTab(k, r)).length})
               </button>
             ))}
+            <select
+              className="field !min-h-[36px] !w-auto !py-1 text-sm"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as ReportType | '')}
+              aria-label={t('tracker.type')}
+            >
+              <option value="">{t('admin.type.all')}</option>
+              {REPORT_TYPES.map((k) => <option key={k} value={k}>{t(`type.${k}`)}</option>)}
+            </select>
           </div>
           {shown.length === 0 && <p className="card p-4 text-sm text-muted">{t('admin.empty')}</p>}
           <ul className="space-y-3">
@@ -159,18 +173,33 @@ export default function AdminPanel({ me, reports, deliveries, mode, needed, admi
                   <img src={photoUrl(r.thumb)} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <StatusBadge status={r.status} />
+                      <StatusBadge status={r.status} type={r.type} />
+                      <TypeTag type={r.type} />
                       {r.isDemo && <DemoBadge />}
                       {r.hidden && <span className="rounded bg-palash px-1.5 py-0.5 text-[10px] font-bold text-white">{t('admin.hidden')}</span>}
                       {r.spamFlags > 0 && <span className="text-xs font-semibold text-palash-dark">{t('admin.flags', { n: r.spamFlags })}</span>}
                     </div>
                     <Link href={`/r/${r.id}`} className="block font-semibold underline">
-                      #{r.id} · {r.category ? t(`cat.${r.category}`) : t('r.title')}{r.ward != null ? ` · ${t('ward.title', { n: r.ward })}` : ''}
+                      #{r.id} · {r.category ? t(`cat.${r.category}`) : t(titleKey(r.type))}{r.ward != null ? ` · ${t('ward.title', { n: r.ward })}` : ''}
                     </Link>
                     <p className="text-sm text-muted" suppressHydrationWarning>
                       {fmtAgo(r.createdAt, lang)} · {t('r.daysOpen', { n: daysBetween(r.createdAt, r.clearedAt ?? Date.now()) })} · 👥 {r.upvotes}
                     </p>
                     {r.note && <p className="truncate text-sm">{r.note}</p>}
+                    {r.type === 'pothole' && (
+                      <label className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted">
+                        {t('admin.road')}
+                        <select
+                          className="field !min-h-[32px] !w-auto !py-0.5 text-sm font-normal text-ink"
+                          value={r.road ?? ''}
+                          disabled={busy === r.id}
+                          onChange={(e) => act(r.id, 'set_road', null, { road: e.target.value })}
+                        >
+                          {!r.road && <option value="">—</option>}
+                          {ROADS.map((k) => <option key={k} value={k}>{t(`road.${k}`)}</option>)}
+                        </select>
+                      </label>
+                    )}
                     <p className="text-xs">
                       {r.verifiedAt ? <span className="font-semibold text-jharna-dark">✓ {t('step.verified')}</span> : <span className="text-muted">{t('r.confirmProgress', { n: Math.max(0, r.upvotes - 1), m: needed })}</span>}
                       {(deliveries[r.id] ?? []).map((d, i) => (

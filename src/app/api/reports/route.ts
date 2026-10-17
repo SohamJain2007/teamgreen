@@ -1,5 +1,5 @@
 import { json, fail } from '@/lib/api';
-import { CATEGORIES, MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYTES, type Category } from '@/lib/constants';
+import { MAX_DISTANCE_FROM_CENTRE_M, MAX_NOTE_LENGTH, MAX_UPLOAD_BYTES, REPORT_TYPES, ROADS, categoriesOf, type Category, type ReportType, type Road } from '@/lib/constants';
 import { normEmail, normPhone } from '@/lib/contact';
 import { distanceFromRanchiM, inRanchi } from '@/lib/geo';
 import { processPhoto } from '@/lib/image';
@@ -51,8 +51,16 @@ export async function POST(req: Request) {
   const acc = Number(form.get('accuracy'));
   const locSource = form.get('locSource') === 'pin' ? 'pin' : 'gps';
 
+  const typeRaw = String(form.get('type') ?? 'garbage');
+  if (!(REPORT_TYPES as readonly string[]).includes(typeRaw)) return fail('type');
+  const type = typeRaw as ReportType;
+  // A pothole's office depends on who owns the road, so the reporter has to say.
+  const roadRaw = String(form.get('road') ?? '');
+  const road = type === 'pothole' && (ROADS as readonly string[]).includes(roadRaw) ? (roadRaw as Road) : null;
+  if (type === 'pothole' && !road) return fail('road');
+
   const catRaw = String(form.get('category') ?? '');
-  const category = (CATEGORIES as readonly string[]).includes(catRaw) ? (catRaw as Category) : null;
+  const category = (categoriesOf(type) as readonly string[]).includes(catRaw) ? (catRaw as Category) : null;
   const note = String(form.get('note') ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_NOTE_LENGTH) || null;
 
   const auto = resolveWard(lat, lng);
@@ -76,6 +84,8 @@ export async function POST(req: Request) {
 
   insertReport({
     id,
+    type,
+    road,
     createdAt: Date.now(),
     lat: Math.round(lat * 1e6) / 1e6,
     lng: Math.round(lng * 1e6) / 1e6,

@@ -5,6 +5,7 @@ import { getT } from '@/lib/lang-server';
 import { computeStats, listPublic } from '@/lib/reports';
 import { assemblyMappingVerified, getMayor, getMp, getOfficerChain, getWard, mlaForWard } from '@/lib/wards';
 import { ReportCard } from '@/components/ui';
+import { titleKey } from '@/lib/labels';
 import { AccountabilityChain, Avatar, StatTiles, SummaryBox, type Contact } from '@/components/Accountability';
 import ShareButton from '@/components/ShareButton';
 import MapView from '@/components/MapView';
@@ -65,7 +66,7 @@ export default async function WardPage({ params }: { params: Promise<{ n: string
         <div className="space-y-2">
           {reports.length > 0 && (
             <MapView
-              points={reports.map((r) => ({ id: r.id, lat: r.lat, lng: r.lng, status: r.status, thumb: r.thumb, label: r.category ? t(`cat.${r.category}`) : t('r.title'), sub: '' }))}
+              points={reports.map((r) => ({ id: r.id, lat: r.lat, lng: r.lng, status: r.status, thumb: r.thumb, label: r.category ? t(`cat.${r.category}`) : t(titleKey(r.type)), sub: '' }))}
               statusLabels={statusLabels}
               openLabel={t('tracker.open')}
               className="h-56"

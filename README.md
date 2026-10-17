@@ -1,7 +1,8 @@
 # SafaiRanchi (working name)
 
-A civic PWA for Ranchi: citizens report garbage black spots in about 30 seconds (photo + GPS, no sign-up) and every report
-is tracked publicly (Reported → Acknowledged → Cleared) against the ward and its councillor.
+A civic PWA for Ranchi: citizens report **garbage spots, potholes and tree cutting** in about 30 seconds (photo + GPS, no sign-up)
+and every report is tracked publicly (Reported → Acknowledged → Cleared / Repaired / Action taken) against the ward and the office
+responsible for it.
 
 Independent project, **not affiliated with Ranchi Municipal Corporation (RMC)**. Reports are public records: every spot is tied to the ward councillor, MLA, MP, Mayor and RMC officer chain responsible for it, with public stats on how many dumps are unresolved and for how long. Nothing is sent to RMC automatically.
 
@@ -53,6 +54,29 @@ See **`DATA_TODO.md`** for exactly what is unverified or missing.
 - Map: Leaflet + OpenStreetMap tiles (no keys). The OSM tile server is for light use; for real traffic use a tile provider or your own server (change `TILE_URL` in `MapViewImpl.tsx`).
 - PWA: `app/manifest.ts`, `public/sw.js` (shell caching, offline page, capped tile cache), icons in `public/icons`.
 
+## Report types and who they go to
+
+The reporter picks what they are reporting first (`/report`, or `/report?type=pothole|tree|garbage`). Each type has its own
+categories (`CATEGORIES_BY_TYPE` in `src/lib/constants.ts`), office, chain of command and escalation plan (`PLANS`, same file):
+
+| Type | Office (`routeOf`) | Complaint goes to | Day 15 | Day 30 |
+|---|---|---|---|---|
+| Garbage | RMC | RMC + ward councillor | Municipal Commissioner | SDO + DC |
+| Pothole, colony lane / local road | RMC | RMC + ward councillor | Municipal Commissioner | SDO + DC |
+| Pothole, city main road | Road Construction Department (RCD) | EE, Road Division Ranchi + ward councillor | SE, Road Circle Ranchi | Chief Engineer (Communication) + DC |
+| Pothole, national highway / bypass | RCD National Highway wing | EE, NH Division Ranchi | SE, NH Circle Ranchi | Chief Engineer, NH Wing + DC |
+| Tree cutting | Forest Department | DFO Ranchi + ward councillor | Conservator of Forests | PCCF & Head of Forest Force + DC |
+
+- **Potholes**: GPS cannot tell who owns a road, so the reporter picks *colony lane*, *city main road* or *national highway* (with the
+  milestone colour as a hint: yellow top = NH, green/blue = state/district road). In Jharkhand "PWD" roads are the Road Construction
+  Department's. Admins can correct the road type in `/admin`; a verified pothole is then also sent to the new office.
+- **Tree cutting**: verified like garbage (one nearby confirmation) before anything is sent. Citizens cannot mark it resolved
+  (nobody can un-cut a tree): the bottom bar offers the forest toll-free line instead, and only admins record "Action taken".
+- **Contacts**: the RCD, NH and Forest officials are in `data/wards.json` → `"escalation"` (`rcd_ee`, `rcd_se`, `rcd_ce`, `nh_ee`, `nh_se`,
+  `nh_ce`, `dfo`, `cf`, `pccf`), taken from the departments' own directories on 2026-10-15 and **not yet checked**, so they are skipped
+  until someone confirms them and ticks "Checked" in `/admin` → Ward data. The Conservator of Forests (Ranchi) and PCCF have no
+  email or phone yet. Chains of command per office: `"officerChains"`; office lines: `meta.rcdHelpline`, `meta.forestHelpline`.
+
 ## Public accountability
 
 - **Report page**: severity (Critical / Moderate / Minor, see `severity()` in `src/lib/reports.ts`), status timeline, "I see this too"
@@ -99,7 +123,7 @@ The code below is kept but **disabled** (`NOTIFY_MODE=off`, the default). Only s
    | 21 | Reminder 3 | RMC + ward councillor + Municipal Commissioner |
    | 30 | Escalation | SDO + Deputy Commissioner (DC) |
 
-   Senior officials' contacts live in `data/wards.json` under `"escalation"` (email preferred, else SMS to the phone; `verified: true` required). A step whose contact is missing is logged as skipped. If several steps are overdue at once, only the latest is sent. Acknowledged reports keep escalating until cleared. The schedule is `ESCALATION_STEPS` in `src/lib/constants.ts`.
+   This table is the RMC plan (garbage and colony-lane potholes); main-road potholes, highway potholes and tree cutting follow their own office's chain on the same days (see [Report types](#report-types-and-who-they-go-to)). Senior officials' contacts live in `data/wards.json` under `"escalation"` (email preferred, else SMS to the phone; `verified: true` required). A step whose contact is missing is logged as skipped. If several steps are overdue at once, only the latest is sent. Acknowledged reports keep escalating until cleared. The schedules are `PLANS` in `src/lib/constants.ts`.
 5. **Acknowledged / Cleared**: an admin marks it, or a citizen *at the spot* posts an "It is clean now" photo. If 2 people nearby say "Still dirty", it reopens.
 
 Each step is timestamped (`events` table), so the report page shows how long every stage took, and the rankings show average days to clear and **response time** (verified to first official action) per ward and zone.

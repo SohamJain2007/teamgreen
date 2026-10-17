@@ -25,6 +25,29 @@ RMC officer names (`officerChain`) are roles only; add names when known.
 Everything in `data/wards.json` is marked `"verified": false`. The app shows a "Data not yet verified" badge next to every
 official until you flip that flag. **Nothing below has been checked by a human.**
 
+## Still open: road and forest officials (potholes, tree cutting), added 2026-10-15
+
+All `verified: false` in `data/wards.json` → `"escalation"`, so nothing is sent to them until checked in `/admin` → Ward data.
+
+- **Road Construction Department** (from rcd.jharkhand.gov.in/whoiswho.php): EE Road Division Ranchi `rcd_ee` (Ram Badan Singh,
+  9431194392, eercdranchi-jhr@nic.in), SE Road Circle Ranchi `rcd_se` (Krishna Kumar Lal, 9431177735, sercdranchi-jhr@nic.in),
+  Chief Engineer (Communication) `rcd_ce` (Manohar Kumar, 7250613333, cecommrcd-jhr@nic.in). RCD office: 0651-2400747.
+- **NH wing**: EE NH Division Ranchi `nh_ee` (Jaikant Ram, 9113777109, eenhranchi-jhr@nic.in), SE NH Circle `nh_se` (email only,
+  senhranchi-jhr@nic.in, no name listed), Chief Engineer NH Wing `nh_ce` (Abhinendra Kumar, 9470139491, cenh-jhr@nic.in).
+  Some national highway stretches around Ranchi are maintained by NHAI rather than RCD; confirm which, and who to contact there.
+- **Forest Department** (forest.jharkhand.gov.in/directory.aspx): DFO Ranchi (territorial) `dfo` (Srikant Verma, 8987790113,
+  dfo-ranchi@gov.in). **Missing**: Conservator of Forests, Ranchi `cf` (not in the directory) and an email/phone for the PCCF & HoFF
+  `pccf` (Sanjeev Kumar). Also check whether urban tree felling in Ranchi goes to the territorial DFO or the Social Forestry
+  division (dfo-sfranchi@gov.in). State toll-free line shown to reporters: 1800-88-92633.
+- Which roads count as "city main road" (RCD) versus RMC roads: reporters choose, and admins can correct it per report.
+- **Re-checked 2026-10-17**: the RCD Who's Who and the forest directory still list the same people, numbers and emails as above.
+  Social Forestry Division Ranchi is headed by Vinay Kant Mishra, IFS (dfo-sfranchi@gov.in, no phone listed). The only Conservator
+  of Forests listed in Ranchi is Working Plan (cf-wpranchi@gov.in), which is not the territorial CF, so `cf` stays empty.
+- **"PWD" in Jharkhand**: there is no single PWD for roads. State highways and major city roads are with the **Road Construction
+  Department** (what the app calls "main road"), national highways with RCD's **NH wing** or, for some stretches, **NHAI** (PIU Ranchi),
+  municipal roads and colony lanes with **RMC**, and village roads with the **Rural Works Department**. Some city roads are being
+  rebuilt by **JUIDCO** under state projects; potholes there may need JUIDCO rather than RCD. None of this split is published per road.
+
 ## What was actually fetched (2026-10-08)
 
 | Data | Source | Notes |

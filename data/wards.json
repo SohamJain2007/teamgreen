@@ -10,6 +10,17 @@
     "centre": {
       "lat": 23.3441,
       "lng": 85.3096
+    },
+    "rcdHelpline": {
+      "phone": "0651-2400747",
+      "email": "secyrcd-jhr@nic.in",
+      "source": "rcd.jharkhand.gov.in, fetched 2026-10-15",
+      "verified": false
+    },
+    "forestHelpline": {
+      "phone": "1800-88-92633",
+      "source": "forest.jharkhand.gov.in (state toll-free for forest fire, man-animal conflict and poaching), fetched 2026-10-15",
+      "verified": false
     }
   },
   "rmcOfficials": [
@@ -859,8 +870,85 @@
       "name": null
     }
   ],
+  "officerChains": {
+    "rcd": [
+      {
+        "role": "Chief Engineer (Communication)",
+        "note": "Road Construction Department, Jharkhand · top of the chain",
+        "name": null,
+        "contact": "rcd_ce"
+      },
+      {
+        "role": "Superintending Engineer, Road Circle Ranchi",
+        "note": "Oversees the road divisions around Ranchi",
+        "name": null,
+        "contact": "rcd_se"
+      },
+      {
+        "role": "Executive Engineer, Road Division Ranchi",
+        "note": "Responsible for repairs on the division's roads",
+        "name": null,
+        "contact": "rcd_ee"
+      },
+      {
+        "role": "Assistant / Junior Engineer",
+        "note": "Frontline engineer for the stretch",
+        "name": null
+      }
+    ],
+    "nh": [
+      {
+        "role": "Chief Engineer, National Highway Wing",
+        "note": "Road Construction Department, Jharkhand · top of the chain",
+        "name": null,
+        "contact": "nh_ce"
+      },
+      {
+        "role": "Superintending Engineer, NH Circle Ranchi",
+        "note": "Oversees national highway divisions around Ranchi",
+        "name": null,
+        "contact": "nh_se"
+      },
+      {
+        "role": "Executive Engineer, NH Division Ranchi",
+        "note": "Responsible for repairs on national highways around Ranchi",
+        "name": null,
+        "contact": "nh_ee"
+      },
+      {
+        "role": "Assistant / Junior Engineer",
+        "note": "Frontline engineer for the stretch",
+        "name": null
+      }
+    ],
+    "forest": [
+      {
+        "role": "PCCF & Head of Forest Force",
+        "note": "Forest Department, Jharkhand · top of the chain",
+        "name": null,
+        "contact": "pccf"
+      },
+      {
+        "role": "Conservator of Forests, Ranchi",
+        "note": "Oversees the forest divisions around Ranchi",
+        "name": null,
+        "contact": "cf"
+      },
+      {
+        "role": "Divisional Forest Officer, Ranchi",
+        "note": "Permits tree felling and acts on illegal cutting",
+        "name": null,
+        "contact": "dfo"
+      },
+      {
+        "role": "Range Forest Officer / Forester",
+        "note": "Frontline officer who inspects the spot",
+        "name": null
+      }
+    ]
+  },
   "escalation": {
-    "readme": "Officials contacted when a verified complaint stays uncleared (see README: escalation). Fill email (preferred) or phone, then set verified:true. Until then that step is logged as skipped.",
+    "readme": "Officials contacted when a verified complaint stays uncleared (see README: escalation). Fill email (preferred) or phone, then set verified:true. Until then that step is logged as skipped. Garbage and colony-lane potholes: commissioner/sdo/dc. Main-road potholes: rcd_*. Highway potholes: nh_*. Tree cutting: dfo/cf/pccf. See PLANS in src/lib/constants.ts.",
     "commissioner": {
       "title": "Municipal Commissioner, Ranchi Municipal Corporation",
       "name": "Mr. Sushant Gaurav, IAS",
@@ -880,6 +968,78 @@
       "name": null,
       "email": null,
       "phone": null,
+      "verified": false
+    },
+    "rcd_ee": {
+      "title": "Executive Engineer, Road Division Ranchi (Road Construction Department)",
+      "name": "Sri Ram Badan Singh",
+      "email": "eercdranchi-jhr@nic.in",
+      "phone": "9431194392",
+      "source": "rcd.jharkhand.gov.in/whoiswho.php (Road Construction Department Who's Who), fetched 2026-10-15; not yet checked by the project",
+      "verified": false
+    },
+    "rcd_se": {
+      "title": "Superintending Engineer, Road Circle Ranchi (Road Construction Department)",
+      "name": "Sri Krishna Kumar Lal",
+      "email": "sercdranchi-jhr@nic.in",
+      "phone": "9431177735",
+      "source": "rcd.jharkhand.gov.in/whoiswho.php (Road Construction Department Who's Who), fetched 2026-10-15; not yet checked by the project",
+      "verified": false
+    },
+    "rcd_ce": {
+      "title": "Chief Engineer (Communication), Road Construction Department",
+      "name": "Sri Manohar Kumar",
+      "email": "cecommrcd-jhr@nic.in",
+      "phone": "7250613333",
+      "source": "rcd.jharkhand.gov.in/whoiswho.php (Road Construction Department Who's Who), fetched 2026-10-15; not yet checked by the project",
+      "verified": false
+    },
+    "nh_ee": {
+      "title": "Executive Engineer, National Highway Division Ranchi (Road Construction Department)",
+      "name": "Sri Jaikant Ram",
+      "email": "eenhranchi-jhr@nic.in",
+      "phone": "9113777109",
+      "source": "rcd.jharkhand.gov.in/whoiswho.php (Road Construction Department Who's Who), fetched 2026-10-15; not yet checked by the project",
+      "verified": false
+    },
+    "nh_se": {
+      "title": "Superintending Engineer, National Highway Circle Ranchi",
+      "name": null,
+      "email": "senhranchi-jhr@nic.in",
+      "phone": null,
+      "source": "rcd.jharkhand.gov.in/whoiswho.php (Road Construction Department Who's Who), fetched 2026-10-15; not yet checked by the project (no name listed)",
+      "verified": false
+    },
+    "nh_ce": {
+      "title": "Chief Engineer, National Highway Wing, Road Construction Department",
+      "name": "Sri Abhinendra Kumar",
+      "email": "cenh-jhr@nic.in",
+      "phone": "9470139491",
+      "source": "rcd.jharkhand.gov.in/whoiswho.php (Road Construction Department Who's Who), fetched 2026-10-15; not yet checked by the project",
+      "verified": false
+    },
+    "dfo": {
+      "title": "Divisional Forest Officer (DFO), Ranchi Forest Division",
+      "name": "Srikant Verma, IFS",
+      "email": "dfo-ranchi@gov.in",
+      "phone": "8987790113",
+      "source": "forest.jharkhand.gov.in/directory.aspx, fetched 2026-10-15; not yet checked by the project (DFO Ranchi, territorial)",
+      "verified": false
+    },
+    "cf": {
+      "title": "Conservator of Forests, Ranchi",
+      "name": null,
+      "email": null,
+      "phone": null,
+      "source": "TODO: not listed in the forest directory (office: Van Bhawan, Doranda, Ranchi 834002)",
+      "verified": false
+    },
+    "pccf": {
+      "title": "Principal Chief Conservator of Forests & Head of Forest Force, Jharkhand",
+      "name": "Shri Sanjeev Kumar, IFS",
+      "email": null,
+      "phone": null,
+      "source": "forest.jharkhand.gov.in home page, fetched 2026-10-15 (no contact listed)",
       "verified": false
     }
   }

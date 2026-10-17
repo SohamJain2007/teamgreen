@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { getT } from '@/lib/lang-server';
 import { computeStats, listPublic } from '@/lib/reports';
 import { getWard, getWardFile } from '@/lib/wards';
+import { ReportCard, TypeIcon } from '@/components/ui';
+import { REPORT_TYPES } from '@/lib/constants';
 import { fmtNum } from '@/lib/format';
-import { ReportCard } from '@/components/ui';
 import { SalLeaf } from '@/components/Ranchi';
 import { GALLERY, PHOTOS, PLEDGE_SLIDES, type Photo } from '@/lib/photos';
 import PhotoSlider from '@/components/PhotoSlider';
@@ -59,6 +60,27 @@ export default async function Home() {
         </section>
       )}
       {hasDemo && <p className="-mt-5 rounded-xl bg-haldi-soft p-2.5 text-center text-sm font-semibold text-haldi-text">{t('home.demoNote')}</p>}
+
+      <section>
+        <h2 className="section-title mb-3">{t('home.types.title')}</h2>
+        <ul className="grid gap-2 sm:grid-cols-3 md:gap-3">
+          {REPORT_TYPES.map((k) => (
+            <li key={k}>
+              <Link href={`/report?type=${k}`} className="card group flex h-full items-center gap-3 p-3 transition hover:-translate-y-0.5 hover:border-sal/40 hover:shadow-md sm:flex-col sm:items-start sm:p-4">
+                <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${TYPE_TONE[k]}`}>
+                  <TypeIcon type={k} size={26} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-lg leading-tight">{t(`type.${k}`)}</span>
+                  <span className="block text-sm text-muted">{t(`type.${k}.d`)}</span>
+                  <span className="mt-1 hidden text-xs font-semibold text-jharna-dark sm:block">{t(`type.${k}.to`)}</span>
+                </span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted sm:hidden" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section>
         <h2 className="section-title mb-3">{t('home.how.title')}</h2>
@@ -163,6 +185,8 @@ const STEPS = [
   // eye
   { tone: 'bg-palash-soft text-palash-dark', icon: ['M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'] },
 ];
+
+const TYPE_TONE = { garbage: 'bg-sal-soft text-sal-dark', pothole: 'bg-haldi-soft text-haldi-text', tree: 'bg-jharna-soft text-jharna-dark' } as const;
 
 const TONE = { sal: 'text-sal-dark', jharna: 'text-jharna-dark', palash: 'text-palash' } as const;
 

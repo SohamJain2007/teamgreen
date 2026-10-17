@@ -6,7 +6,7 @@
 import { getDb } from './db';
 import { audit } from './admins';
 import { normEmail, normPhone } from './contact';
-import { ZONES } from './constants';
+import { ESCALATION_ROLES, ZONES } from './constants';
 import { inRanchi } from './geo';
 import { fmtDate } from './format';
 import { getWardFile, loadRaw, wardEditsChanged, type EscalationRole, type WardFile } from './wards';
@@ -35,11 +35,20 @@ const SCHEMAS: Record<EntityKind, Record<string, FieldKind>> = {
   assembly: { verified: 'bool' },
 };
 
-export const ESCALATION_ROLES: EscalationRole[] = ['commissioner', 'sdo', 'dc'];
+export { ESCALATION_ROLES };
 const ESCALATION_TITLES: Record<EscalationRole, string> = {
   commissioner: 'Municipal Commissioner, Ranchi Municipal Corporation',
   sdo: 'Sub-Divisional Officer (SDO), Ranchi Sadar',
   dc: 'Deputy Commissioner (DC), Ranchi',
+  rcd_ee: 'Executive Engineer, Road Division Ranchi (Road Construction Department)',
+  rcd_se: 'Superintending Engineer, Road Circle Ranchi (Road Construction Department)',
+  rcd_ce: 'Chief Engineer (Communication), Road Construction Department',
+  nh_ee: 'Executive Engineer, National Highway Division Ranchi (Road Construction Department)',
+  nh_se: 'Superintending Engineer, National Highway Circle Ranchi',
+  nh_ce: 'Chief Engineer, National Highway Wing, Road Construction Department',
+  dfo: 'Divisional Forest Officer (DFO), Ranchi Forest Division',
+  cf: 'Conservator of Forests, Ranchi',
+  pccf: 'Principal Chief Conservator of Forests & Head of Forest Force, Jharkhand',
 };
 
 export type EditError = 'not_found' | 'bad_key' | 'bad_phone' | 'bad_email' | 'bad_zone' | 'bad_assembly' | 'bad_location' | 'required';
@@ -58,7 +67,7 @@ function entity(file: WardFile, key: string): Record<string, unknown> | undefine
     case 'ward':
       return file.wards.find((w) => !w.placeholder && w.wardNumber === Number(id));
     case 'escalation':
-      if (!ESCALATION_ROLES.includes(id as EscalationRole)) return undefined;
+      if (!(ESCALATION_ROLES as readonly string[]).includes(id)) return undefined;
       return file.escalation?.[id as EscalationRole] ?? { title: ESCALATION_TITLES[id as EscalationRole], name: null, email: null, phone: null, verified: false };
     case 'official':
       return file.rmcOfficials.find((o) => o.role === id);

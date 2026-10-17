@@ -8,7 +8,7 @@ import { getDb } from '../src/lib/db';
 import { getStorage } from '../src/lib/storage';
 import { insertReport } from '../src/lib/reports';
 import { getWard } from '../src/lib/wards';
-import type { Category, Status } from '../src/lib/constants';
+import type { Category, ReportType, Road, Status } from '../src/lib/constants';
 
 const DAY = 86_400_000;
 
@@ -71,7 +71,7 @@ async function makePhoto(seed: number, dirty: boolean, label: string) {
 }
 
 type Demo = {
-  ward: number; cat: Category | null; status: Status; age: number; ack?: number; clr?: number; up: number; note?: string;
+  type?: ReportType; road?: Road; ward: number; cat: Category | null; status: Status; age: number; ack?: number; clr?: number; up: number; note?: string;
 };
 // ack / clr = days after the report was made.
 const DEMOS: Demo[] = [
@@ -101,6 +101,12 @@ const DEMOS: Demo[] = [
   { ward: 46, cat: 'dead_animal', status: 'reported', age: 0.2, up: 2 },
   { ward: 48, cat: 'mixed', status: 'cleared', age: 35, ack: 4, clr: 21, up: 6, note: 'Took three weeks, but it was finally cleared.' },
   { ward: 51, cat: 'burning', status: 'reported', age: 19, up: 8 },
+  { type: 'pothole', road: 'main', ward: 20, cat: 'pothole', status: 'reported', age: 6, up: 9, note: 'Deep pothole in the middle lane, two-wheelers swerve around it.' },
+  { type: 'pothole', road: 'lane', ward: 29, cat: 'road_broken', status: 'acknowledged', age: 12, ack: 5, up: 4 },
+  { type: 'pothole', road: 'highway', ward: 53, cat: 'manhole', status: 'reported', age: 1, up: 3, note: 'Open manhole on the service road, no cover or barricade.' },
+  { type: 'pothole', road: 'main', ward: 35, cat: 'waterlogging', status: 'cleared', age: 28, ack: 4, clr: 16, up: 6 },
+  { type: 'tree', ward: 7, cat: 'tree_cutting', status: 'reported', age: 0.1, up: 2, note: 'Two big trees being cut near the school gate.' },
+  { type: 'tree', ward: 33, cat: 'tree_cut', status: 'acknowledged', age: 4, ack: 2, up: 5 },
 ];
 
 async function main() {
@@ -138,7 +144,7 @@ async function main() {
       await st.put(`${id}_a_t.jpg`, after.thumb);
     }
     insertReport({
-      id, createdAt, lat: +lat.toFixed(6), lng: +lng.toFixed(6), accuracy: 10 + Math.round(r() * 25), locSource: 'gps',
+      id, type: d.type, road: d.road ?? null, createdAt, lat: +lat.toFixed(6), lng: +lng.toFixed(6), accuracy: 10 + Math.round(r() * 25), locSource: 'gps',
       ward: d.ward, wardAuto: true, category: d.cat, note: d.note ?? null, photo: `${id}.jpg`, thumb: `${id}_t.jpg`,
       status: d.status,
       afterPhoto: after ? `${id}_a.jpg` : null, afterThumb: after ? `${id}_a_t.jpg` : null,

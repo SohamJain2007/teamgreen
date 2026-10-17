@@ -1,6 +1,8 @@
 /**
- * Sends verified complaints to officials: an email to RMC (photo attached) and the ward councillor (email if known in
- * data/wards.json, otherwise SMS). The reporter is CC'd on complaint emails when they gave an email.
+ * Sends verified complaints to the office responsible (see PLANS in constants.ts): garbage and colony-lane potholes to RMC
+ * and the ward councillor, main-road potholes to the Road Construction Department's Road Division, highway potholes to
+ * its National Highway Division, tree cutting to the DFO. Email when an address is known (photo attached), otherwise SMS.
+ * The reporter is CC'd on complaint emails when they gave an email.
  *
  * NOTIFY_MODE controls whether anything leaves the server:
  *   off      (default) nothing is queued or sent
@@ -17,7 +19,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import { getDb } from './db';
 import { addEvent, getContact, getReport, type Report } from './reports';
 import { getEscalationContact, getWard, getWardFile } from './wards';
-import { ESCALATION_STEPS, type EscalationStep, type NotifyRole } from './constants';
+import { FIRST_REMINDER_DAY, PLANS, routeOf, type EscalationStep, type NotifyRole, type ReportType } from './constants';
 import { getStorage } from './storage';
 import { normEmail, normPhone } from './contact';
 import { translate } from './translations';
@@ -28,7 +30,12 @@ type Kind = 'complaint' | EscalationStep | 'cleared';
 type Row = { id: number; report_id: string; channel: Channel; kind: Kind; role: string | null; recipient: string; status: string; attempts: number };
 
 const DAY = 86_400_000;
-const stepOf = (kind: Kind) => ESCALATION_STEPS.find((s) => s.step === kind);
+/** The reminder / escalation step `kind` in the plan for this report's office. */
+const stepOf = (r: Report, kind: Kind) => (PLANS[routeOf(r)].steps as readonly { step: string; day: number; label: string; roles: readonly NotifyRole[] }[]).find((s) => s.step === kind);
+
+const NOUN: Record<ReportType, string> = { garbage: 'Garbage', pothole: 'Pothole', tree: 'Tree cutting' };
+const ROAD_TEXT = { lane: 'colony lane / local road', main: 'city main road', highway: 'national highway / bypass' } as const;
+const whatOf = (r: Report) => (r.category ? translate('en', `cat.${r.category}`) : r.type === 'garbage' ? 'Garbage spot' : NOUN[r.type]);
 
 const MAX_ATTEMPTS = 5;
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
@@ -56,10 +63,10 @@ export const reportUrl = (id: string) => `${SITE}/r/${id}`;
 /** Plain-text complaint, shared by the email body and the citizen's one-tap WhatsApp/email buttons. */
 export function complaintText(r: Report): string {
   const w = r.ward != null ? getWard(r.ward) : undefined;
-  const what = r.category ? translate('en', `cat.${r.category}`) : 'Garbage spot';
   return [
-    `Garbage complaint #${r.id} (SafaiRanchi)`,
-    `${what}${w ? `, Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : ''}`,
+    `${NOUN[r.type]} complaint #${r.id} (SafaiRanchi)`,
+    `${whatOf(r)}${w ? `, Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : ''}`,
+    r.road ? `Road: ${ROAD_TEXT[r.road]} (as reported)` : null,
     r.note ? `Note: ${r.note}` : null,
     `Location: ${mapsUrl(r)}`,
     `Photo and status: ${reportUrl(r.id)}`,
@@ -78,19 +85,18 @@ const wardText = (r: Report) => {
 /** Short complaint or escalation for an SMS (one or two SMS segments). */
 export function complaintSms(r: Report, kind: Kind = 'complaint'): string {
   const where = wardText(r) ? ` in ${wardText(r)}` : '';
-  const step = stepOf(kind);
-  if (step) return `SafaiRanchi ${step.label}: complaint #${r.id}${where} is still not cleared after ${daysOpen(r)} days. Photo and location: ${reportUrl(r.id)}`;
-  const what = r.category ? translate('en', `cat.${r.category}`) : 'Garbage spot';
+  const step = stepOf(r, kind);
+  if (step) return `SafaiRanchi ${step.label}: ${NOUN[r.type].toLowerCase()} complaint #${r.id}${where} is still not resolved after ${daysOpen(r)} days. Photo and location: ${reportUrl(r.id)}`;
   const n = Math.max(0, r.upvotes - 1);
-  return `SafaiRanchi: new complaint #${r.id}${where}: ${what}${n ? `, confirmed by ${n} residents` : ''}. Photo and location: ${reportUrl(r.id)}`;
+  return `SafaiRanchi: new ${NOUN[r.type].toLowerCase()} complaint #${r.id}${where}: ${whatOf(r)}${n ? `, confirmed by ${n} residents` : ''}. Photo and location: ${reportUrl(r.id)}`;
 }
 
 /** First lines of an escalation email (empty for the original complaint). */
 function escalationIntro(r: Report, kind: Kind): string {
-  const step = stepOf(kind);
+  const step = stepOf(r, kind);
   if (!step || !r.verifiedAt) return '';
   const sent = new Date(r.verifiedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' });
-  return `${step.label.toUpperCase()}: this complaint was sent to RMC and the ward councillor on ${sent} and is still not cleared after ${daysOpen(r)} days.\n\n`;
+  return `${step.label.toUpperCase()}: this complaint was sent to ${PLANS[routeOf(r)].office} on ${sent} and is still not resolved after ${daysOpen(r)} days.\n\n`;
 }
 
 /** Where a message to `role` about report `r` goes: [channel, address] or a reason it cannot be sent. */
@@ -137,9 +143,10 @@ export function enqueue(reportId: string, kind: Exclude<Kind, 'cleared'>, roles:
   void dispatchPending();
 }
 
-/** Queue deliveries for a newly verified report: RMC and the ward councillor. */
+/** Queue deliveries for a newly verified report to the office responsible for it. */
 export function enqueueForReport(reportId: string) {
-  enqueue(reportId, 'complaint', ['rmc', 'councillor']);
+  const r = getReport(reportId);
+  if (r) enqueue(reportId, 'complaint', PLANS[routeOf(r)].complaint);
 }
 
 /**
@@ -151,15 +158,16 @@ export function runEscalations(now = Date.now()) {
   const db = getDb();
   const reports = db
     .prepare(
-      `SELECT id, verified_at FROM reports WHERE verified_at IS NOT NULL AND verified_at <= ? AND status != 'cleared' AND hidden = 0 AND is_demo = 0`,
+      `SELECT id, verified_at, type, road FROM reports WHERE verified_at IS NOT NULL AND verified_at <= ? AND status != 'cleared' AND hidden = 0 AND is_demo = 0`,
     )
-    .all(now - ESCALATION_STEPS[0].day * DAY) as { id: string; verified_at: number }[];
+    .all(now - FIRST_REMINDER_DAY * DAY) as { id: string; verified_at: number; type: ReportType | null; road: Report['road'] }[];
   const done = db.prepare('SELECT step FROM escalations WHERE report_id = ?').pluck();
   const mark = db.prepare('INSERT OR IGNORE INTO escalations (report_id, step, at, sent) VALUES (?,?,?,?)');
-  for (const { id, verified_at } of reports) {
+  for (const { id, verified_at, type, road } of reports) {
     const taken = new Set(done.all(id) as string[]);
     const days = (now - verified_at) / DAY;
-    const due = ESCALATION_STEPS.filter((s) => s.day <= days && !taken.has(s.step));
+    const steps = PLANS[routeOf({ type: type ?? 'garbage', road })].steps;
+    const due = steps.filter((s) => s.day <= days && !taken.has(s.step));
     if (!due.length) continue;
     const step = due[due.length - 1];
     db.transaction(() => {
@@ -171,10 +179,13 @@ export function runEscalations(now = Date.now()) {
   }
 }
 
-/** Short message to the reporter that their spot was cleared, used for both email and SMS. */
+/** Short message to the reporter that their report was resolved, used for both email and SMS. */
 export function clearedText(r: Report): string {
   const w = r.ward != null ? getWard(r.ward) : undefined;
-  return `SafaiRanchi: the garbage spot you reported (#${r.id}${w ? `, Ward ${w.wardNumber}` : ''}) has been marked cleared. See the after photo, or say it is still dirty: ${reportUrl(r.id)}`;
+  const ref = `(#${r.id}${w ? `, Ward ${w.wardNumber}` : ''})`;
+  if (r.type === 'pothole') return `SafaiRanchi: the pothole you reported ${ref} has been marked repaired. See the photo, or say it is still broken: ${reportUrl(r.id)}`;
+  if (r.type === 'tree') return `SafaiRanchi: action has been recorded on the tree cutting you reported ${ref}. Details: ${reportUrl(r.id)}`;
+  return `SafaiRanchi: the garbage spot you reported ${ref} has been marked cleared. See the after photo, or say it is still dirty: ${reportUrl(r.id)}`;
 }
 
 /** Queue "your spot was cleared" messages to the reporter and start sending. */
@@ -278,7 +289,7 @@ async function sendEmail(r: Report, to: string, kind: Kind = 'complaint') {
     to,
     cc: cc && cc !== to ? cc : undefined,
     replyTo: process.env.MAIL_REPLY_TO || undefined,
-    subject: `${stepOf(kind) ? `[${stepOf(kind)!.label}, ${daysOpen(r)} days] ` : ''}Garbage complaint #${r.id}${w ? ` - Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : ''}, Ranchi`,
+    subject: `${stepOf(r, kind) ? `[${stepOf(r, kind)!.label}, ${daysOpen(r)} days] ` : ''}${NOUN[r.type]} complaint #${r.id}${w ? ` - Ward ${w.wardNumber}${w.name ? ` (${w.name})` : ''}` : ''}, Ranchi`,
     text: `${escalationIntro(r, kind)}${text}\n\nThis complaint was reported and verified by citizens on SafaiRanchi, an independent citizen platform. Please update its status at the link above.`,
     attachments: photo ? [{ filename: `complaint-${r.id}.jpg`, content: photo, contentType: 'image/jpeg' }] : [],
   });
@@ -291,8 +302,8 @@ async function sendClearedEmail(r: Report, to: string) {
     from,
     to,
     replyTo: process.env.MAIL_REPLY_TO || undefined,
-    subject: `Cleared: the garbage spot you reported (#${r.id})`,
-    text: `${clearedText(r)}\n\nThank you for helping keep Ranchi clean.\nYou are getting this one-time message because you left this email when reporting the spot.`,
+    subject: r.type === 'pothole' ? `Repaired: the pothole you reported (#${r.id})` : r.type === 'tree' ? `Action taken: the tree cutting you reported (#${r.id})` : `Cleared: the garbage spot you reported (#${r.id})`,
+    text: `${clearedText(r)}\n\nThank you for looking after Ranchi.\nYou are getting this one-time message because you left this email when reporting the spot.`,
   });
 }
 

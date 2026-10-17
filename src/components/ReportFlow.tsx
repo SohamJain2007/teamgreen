@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useI18n } from './I18n';
 import LocationPicker from './LocationPicker';
 import { photoUrl } from '@/lib/format';
-import { CATEGORIES, type Category, type Status } from '@/lib/constants';
-import { StatusBadge } from './ui';
+import { REPORT_TYPES, ROADS, categoriesOf, type Category, type ReportType, type Road, type Status } from '@/lib/constants';
+import { StatusBadge, TypeIcon } from './ui';
+import { titleKey } from '@/lib/labels';
+import type { Key } from '@/lib/translations';
 import { compress } from '@/lib/client-media';
 import { distanceFromRanchiM, inRanchi } from '@/lib/geo';
 import Link from 'next/link';
@@ -18,13 +20,15 @@ type LocState = 'loading' | 'ok' | 'denied' | 'error' | 'outside';
 type Nearby = { id: string; thumb: string; category: Category | null; status: Status; upvotes: number; distanceM: number };
 type WardRes = { ward: number | null; method: 'polygon' | 'centroid' | 'none' };
 
-export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
+export default function ReportFlow({ wards, initialType = null, forestPhone }: { wards: WardOpt[]; initialType?: ReportType | null; forestPhone: string | null }) {
   const { t } = useI18n();
   const router = useRouter();
   const camRef = useRef<HTMLInputElement>(null);
   const galRef = useRef<HTMLInputElement>(null);
   const honeyRef = useRef<HTMLInputElement>(null);
 
+  const [type, setType] = useState<ReportType | null>(initialType);
+  const [road, setRoad] = useState<Road | null>(null);
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loc, setLoc] = useState<Loc | null>(null); // the spot: GPS, or a pin the person moved
@@ -72,7 +76,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     const ac = new AbortController();
     const id = setTimeout(async () => {
       try {
-        const r = await fetch(`/api/nearby?lat=${loc.lat}&lng=${loc.lng}`, { signal: ac.signal });
+        const r = await fetch(`/api/nearby?lat=${loc.lat}&lng=${loc.lng}${type ? `&type=${type}` : ''}`, { signal: ac.signal });
         if (!r.ok) return;
         const d = await r.json();
         setWardRes(d.ward);
@@ -84,7 +88,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
       clearTimeout(id);
       ac.abort();
     };
-  }, [loc?.lat, loc?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loc?.lat, loc?.lng, type]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
@@ -104,6 +108,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   async function submit() {
     if (!photo) return setError(t('report.err.photo'));
     if (!loc || !me) return setError(t('report.err.loc'));
+    if (type === 'pothole' && !road) return setError(t('report.err.road'));
     if (phone.trim() && !normPhone(phone)) return setError(t('report.err.phone'));
     if (email.trim() && !normEmail(email)) return setError(t('report.err.email'));
     if (!phone.trim() && !email.trim()) return setError(t('report.err.contact'));
@@ -111,6 +116,8 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     setError(null);
     const fd = new FormData();
     fd.append('photo', photo, 'photo.jpg');
+    fd.append('type', type ?? 'garbage');
+    if (road) fd.append('road', road);
     fd.append('lat', String(loc.lat));
     fd.append('lng', String(loc.lng));
     if (loc.accuracy) fd.append('accuracy', String(loc.accuracy));
@@ -142,6 +149,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
           : d.error === 'phone' ? t('report.err.phone')
           : d.error === 'email' ? t('report.err.email')
           : d.error === 'contact' ? t('report.err.contact')
+          : d.error === 'road' ? t('report.err.road')
           : t('report.err.generic'),
       );
     } catch {
@@ -197,12 +205,63 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     );
   }
 
+  // ---------- Step 0: what is it? ----------
+  if (!type) {
+    return (
+      <div className="mx-auto max-w-md space-y-4">
+        <div>
+          <h1 className="text-3xl">{t('report.pick.title')}</h1>
+          <p className="mt-1 text-muted">{t('report.pick.sub')}</p>
+        </div>
+        <ul className="space-y-3">
+          {REPORT_TYPES.map((k) => (
+            <li key={k}>
+              <button onClick={() => setType(k)} className="card flex w-full items-center gap-4 p-4 text-left transition hover:border-sal/50 hover:shadow-md active:scale-[.99]">
+                <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${TYPE_TONE[k]}`}>
+                  <TypeIcon type={k} size={28} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-lg leading-tight">{t(`type.${k}`)}</span>
+                  <span className="block text-sm text-muted">{t(`type.${k}.d`)}</span>
+                  <span className="mt-0.5 block text-xs font-semibold text-jharna-dark">{t(`type.${k}.to`)}</span>
+                </span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <LocStatus />
+      </div>
+    );
+  }
+
+  const typeChip = (
+    <p className="flex items-center gap-2 text-sm">
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold ${TYPE_TONE[type]}`}>
+        <TypeIcon type={type} size={16} />
+        {t(`type.${type}`)}
+      </span>
+      {!preview && !initialType && (
+        <button onClick={() => { setType(null); setRoad(null); setCategory(null); }} className="font-semibold text-jharna-dark underline">
+          {t('report.change')}
+        </button>
+      )}
+    </p>
+  );
+  const treeSafety = type === 'tree' && (
+    <p className="rounded-xl border border-haldi/40 bg-haldi-soft p-3 text-sm text-haldi-text">
+      {t('report.tree.safety', { phone: forestPhone ?? '1800-88-92633' })}
+    </p>
+  );
+
   // ---------- Step 1: photo ----------
   if (!preview) {
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-3xl">{t('report.title')}</h1>
-        <p className="text-muted">{t('report.lead')}</p>
+        {typeChip}
+        <h1 className="text-3xl">{t(TITLE[type])}</h1>
+        <p className="text-muted">{t(LEAD[type])}</p>
+        {treeSafety}
         {hiddenInputs}
         <button onClick={() => camRef.current?.click()} className="grid aspect-[4/3] w-full place-items-center rounded-3xl border-2 border-dashed border-sal/50 bg-gradient-to-b from-sal-soft to-jharna-soft text-sal-dark transition hover:border-sal active:scale-[.99]">
           <span className="flex flex-col items-center gap-2">
@@ -237,7 +296,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     );
   }
 
-  const canSubmit = !!photo && !!loc && !!me && !busy;
+  const canSubmit = !!photo && !!loc && !!me && !busy && (type !== 'pothole' || !!road);
   const wardObj = wards.find((w) => w.n === ward);
   const dup = !dupDismissed && nearby.length > 0 ? nearby[0] : null;
 
@@ -245,6 +304,7 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
   return (
     <div className="mx-auto max-w-md space-y-4">
       {hiddenInputs}
+      {typeChip}
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={preview} alt="" className="max-h-72 w-full rounded-2xl bg-line object-cover" />
@@ -311,9 +371,9 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photoUrl(dup.thumb)} alt="" className="h-20 w-20 rounded-xl object-cover" />
             <div className="text-sm">
-              <StatusBadge status={dup.status} />
+              <StatusBadge status={dup.status} type={type} />
               <p className="mt-1">
-                {dup.category ? t(`cat.${dup.category}`) : t('r.title')} · {t('report.dup.away', { m: dup.distanceM })}
+                {dup.category ? t(`cat.${dup.category}`) : t(titleKey(type))} · {t('report.dup.away', { m: dup.distanceM })}
               </p>
               <p className="text-muted">{t('r.people', { n: dup.upvotes })}</p>
             </div>
@@ -329,12 +389,30 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
         </div>
       )}
 
+      {type === 'pothole' && (
+        <fieldset>
+          <legend className="text-sm font-semibold">{t('road.title')}</legend>
+          <p className="mb-2 text-xs text-muted">{t('road.hint')}</p>
+          <div className="space-y-2">
+            {ROADS.map((k) => (
+              <label key={k} className={`flex cursor-pointer gap-3 rounded-2xl border-2 bg-white p-3 transition ${road === k ? 'border-sal bg-sal-soft/40' : 'border-line hover:border-sal/40'}`}>
+                <input type="radio" name="road" value={k} checked={road === k} onChange={() => setRoad(k)} className="mt-1 h-4 w-4 shrink-0 accent-[#1A7A50]" />
+                <span>
+                  <span className="block font-semibold">{t(`road.${k}`)}</span>
+                  <span className="block text-xs text-muted">{t(`road.${k}.d`)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       <div>
         <p className="mb-1.5 text-sm font-semibold">
           {t('report.category')} <span className="font-normal text-muted">({t('report.optional')})</span>
         </p>
         <div className="flex flex-wrap gap-2" role="group">
-          {CATEGORIES.map((c) => (
+          {categoriesOf(type).map((c) => (
             <button key={c} onClick={() => setCategory(category === c ? null : c)} aria-pressed={category === c} className={`chip ${category === c ? 'chip-on' : ''}`}>
               {t(`cat.${c}`)}
             </button>
@@ -374,9 +452,11 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
       {/* Honeypot: invisible to people, tempting to bots */}
       <input ref={honeyRef} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
 
+      {treeSafety}
+
       {error && <p className="rounded-xl bg-palash-soft p-3 text-sm font-semibold text-palash-dark" role="alert">{error}</p>}
 
-      <div className="sticky bottom-20 z-10 md:bottom-4">
+      <div className="sticky bottom-[68px] z-10 -mx-4 bg-paper/95 px-4 py-2 backdrop-blur md:bottom-0">
         <button onClick={submit} disabled={!canSubmit} className="btn-primary w-full text-lg shadow-lg">
           {busy ? t('report.submitting') : !loc ? t('report.locating') : t('report.submit')}
         </button>
@@ -385,3 +465,11 @@ export default function ReportFlow({ wards }: { wards: WardOpt[] }) {
     </div>
   );
 }
+
+const TYPE_TONE: Record<ReportType, string> = {
+  garbage: 'bg-sal-soft text-sal-dark',
+  pothole: 'bg-haldi-soft text-haldi-text',
+  tree: 'bg-jharna-soft text-jharna-dark',
+};
+const TITLE: Record<ReportType, Key> = { garbage: 'report.title', pothole: 'report.title.pothole', tree: 'report.title.tree' };
+const LEAD: Record<ReportType, Key> = { garbage: 'report.lead', pothole: 'report.lead.pothole', tree: 'report.lead.tree' };

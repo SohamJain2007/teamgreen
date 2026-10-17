@@ -20,8 +20,8 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: { default: 'SafaiRanchi: report garbage spots in Ranchi', template: '%s · SafaiRanchi' },
-  description: 'Report garbage black spots in Ranchi in 30 seconds and track them publicly until they are cleared.',
+  title: { default: 'SafaiRanchi: report garbage, potholes and tree cutting in Ranchi', template: '%s · SafaiRanchi' },
+  description: 'Report garbage spots, potholes and tree cutting in Ranchi in 30 seconds, sent to the office responsible and tracked publicly until fixed.',
   applicationName: 'SafaiRanchi',
   appleWebApp: { capable: true, title: 'SafaiRanchi', statusBarStyle: 'default' },
   icons: { apple: '/icons/apple-touch-icon.png' },
@@ -57,10 +57,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <nav>
                 <p className="font-semibold text-ink">{translate(lang, 'footer.explore')}</p>
                 <ul className="mt-1 text-muted">
-                  {(['report', 'map', 'leaderboard'] as const).map((r) => (
+                  {([['report', 'nav.report'], ['map', 'nav.map'], ['leaderboard', 'nav.rankings']] as const).map(([r, k]) => (
                     <li key={r}>
                       <Link href={`/${r}`} className="inline-block py-1.5 hover:text-sal-dark">
-                        {translate(lang, r === 'report' ? 'nav.report' : r === 'map' ? 'nav.map' : 'nav.rankings')}
+                        {translate(lang, k)}
                       </Link>
                     </li>
                   ))}

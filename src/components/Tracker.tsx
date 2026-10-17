@@ -3,26 +3,31 @@ import { useMemo, useState } from 'react';
 import { useI18n } from './I18n';
 import MapView, { type MapPoint } from './MapView';
 import { ReportCard } from './ui';
-import { CATEGORIES, STATUSES, ZONES, type Status } from '@/lib/constants';
+import { titleKey } from '@/lib/labels';
+import { CATEGORIES, REPORT_TYPES, STATUSES, ZONES, categoriesOf, type ReportType, type Status } from '@/lib/constants';
 import type { Report } from '@/lib/reports';
 
 type WardOpt = { n: number; name: string | null; zone: string | null };
-type Filters = { ward: string; zone: string; status: string; category: string; date: string };
+type Filters = { type: string; ward: string; zone: string; status: string; category: string; date: string };
+const NONE: Filters = { type: '', ward: '', zone: '', status: '', category: '', date: '' };
 
 export default function Tracker({ reports, wards, initial }: { reports: Report[]; wards: WardOpt[]; initial?: Partial<Filters> }) {
   const { t } = useI18n();
-  const [f, setF] = useState<Filters>({ ward: '', zone: '', status: '', category: '', date: '', ...initial });
+  const [f, setF] = useState<Filters>({ ...NONE, ...initial });
   const [view, setView] = useState<'map' | 'list'>('map');
   const [showFilters, setShowFilters] = useState(false);
 
   const wardInfo = useMemo(() => new Map(wards.map((w) => [w.n, w])), [wards]);
-  const set = (k: keyof Filters) => (e: React.ChangeEvent<HTMLSelectElement>) => setF((p) => ({ ...p, [k]: e.target.value }));
+  // A category belongs to one type, so changing the type clears it.
+  const set = (k: keyof Filters) => (e: React.ChangeEvent<HTMLSelectElement>) =>
+    setF((p) => ({ ...p, [k]: e.target.value, ...(k === 'type' ? { category: '' } : {}) }));
   const active = Object.values(f).filter(Boolean).length;
 
   const filtered = useMemo(() => {
     const now = Date.now();
     const maxAge = f.date ? Number(f.date) * 86_400_000 : Infinity;
     return reports.filter((r) => {
+      if (f.type && r.type !== f.type) return false;
       if (f.ward && r.ward !== Number(f.ward)) return false;
       if (f.zone && (r.ward == null || wardInfo.get(r.ward)?.zone !== f.zone)) return false;
       if (f.status && r.status !== f.status) return false;
@@ -40,7 +45,7 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
         lng: r.lng,
         status: r.status,
         thumb: r.thumb,
-        label: r.category ? t(`cat.${r.category}`) : t('r.title'),
+        label: r.category ? t(`cat.${r.category}`) : t(titleKey(r.type)),
         sub: r.ward != null ? t('ward.title', { n: r.ward }) : '',
       })),
     [filtered, t],
@@ -59,7 +64,7 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
           {t('tracker.filters')}{active ? ` (${active})` : ''}
         </button>
         {active > 0 && (
-          <button onClick={() => setF({ ward: '', zone: '', status: '', category: '', date: '' })} className="text-sm font-semibold text-jharna-dark underline">
+          <button onClick={() => setF(NONE)} className="text-sm font-semibold text-jharna-dark underline">
             {t('tracker.clear')}
           </button>
         )}
@@ -73,7 +78,10 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
       </div>
 
       {showFilters && (
-        <div className="card grid grid-cols-2 gap-2 p-3 md:grid-cols-5">
+        <div className="card grid grid-cols-2 gap-2 p-3 md:grid-cols-6">
+          <Sel label={t('tracker.type')} value={f.type} onChange={set('type')} all={t('tracker.all')}>
+            {REPORT_TYPES.map((k) => <option key={k} value={k}>{t(`type.${k}`)}</option>)}
+          </Sel>
           <Sel label={t('tracker.ward')} value={f.ward} onChange={set('ward')} all={t('tracker.all')}>
             {wards.map((w) => <option key={w.n} value={w.n}>{w.n}{w.name ? ` · ${w.name}` : ''}</option>)}
           </Sel>
@@ -84,7 +92,7 @@ export default function Tracker({ reports, wards, initial }: { reports: Report[]
             {STATUSES.map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
           </Sel>
           <Sel label={t('tracker.category')} value={f.category} onChange={set('category')} all={t('tracker.all')}>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{t(`cat.${c}`)}</option>)}
+            {(f.type ? categoriesOf(f.type as ReportType) : CATEGORIES).map((c) => <option key={c} value={c}>{t(`cat.${c}`)}</option>)}
           </Sel>
           <Sel label={t('tracker.date')} value={f.date} onChange={set('date')} all={t('tracker.all')}>
             <option value="7">{t('tracker.last7')}</option>

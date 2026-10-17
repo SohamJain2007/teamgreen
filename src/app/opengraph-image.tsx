@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 // Link preview for every page (WhatsApp, X, Facebook ...). Report pages override it with the photo of the spot.
-export const alt = 'SafaiRanchi: report garbage spots in Ranchi and track them until they are clean';
+export const alt = 'SafaiRanchi: report garbage, potholes and tree cutting in Ranchi and track them until they are fixed';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -19,8 +19,8 @@ export default function OpengraphImage() {
           <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -1 }}>SafaiRanchi</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ fontSize: 64, fontWeight: 700, lineHeight: 1.1, maxWidth: 980 }}>Spot a garbage dump in Ranchi? Report it in 30 seconds.</div>
-          <div style={{ fontSize: 34, opacity: 0.9 }}>Photo + location, no sign-up. Tracked in public until it is clean.</div>
+          <div style={{ fontSize: 64, fontWeight: 700, lineHeight: 1.1, maxWidth: 980 }}>Garbage, a pothole, a tree being cut? Report it in 30 seconds.</div>
+          <div style={{ fontSize: 34, opacity: 0.9 }}>Photo + location, no sign-up. Sent to the office responsible, tracked in public until fixed.</div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 28 }}>
           <div style={{ display: 'flex', gap: 16 }}>

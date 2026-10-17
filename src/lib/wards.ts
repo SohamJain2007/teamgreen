@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { haversineM, pointInGeometry } from './geo';
 import { getDb } from './db';
-import type { Zone } from './constants';
+import type { EscalationRole, Route, Zone } from './constants';
 
 export type Ward = {
   wardNumber: number;
@@ -39,16 +39,27 @@ export type Representative = {
   party: string | null;
   phone: string | null;
 };
-export type OfficerRole = { role: string; note: string; name: string | null };
+/** One level of an office's chain of command. `contact` names the escalation contact that fills in the person's name. */
+export type OfficerRole = { role: string; note: string; name: string | null; contact?: EscalationRole };
 export type WardFile = {
-  meta: { readme: string; rmcHelpline: { phone: string; email: string; verified: boolean }; centre: { lat: number; lng: number } };
+  meta: {
+    readme: string;
+    rmcHelpline: { phone: string; email: string; verified: boolean };
+    /** Road Construction Department office (potholes on main roads and highways). */
+    rcdHelpline?: { phone: string; email?: string; verified: boolean };
+    /** Forest Department toll-free line (tree cutting). */
+    forestHelpline?: { phone: string; verified: boolean };
+    centre: { lat: number; lng: number };
+  };
   rmcOfficials: Official[];
   representatives?: { source: string; mp: Representative; mlas: Representative[]; assemblyMappingVerified: boolean };
   officerChain?: OfficerRole[];
+  /** Chains for the other offices (roads, highways, forest); the RMC chain is officerChain. */
+  officerChains?: Partial<Record<Exclude<Route, 'rmc'>, OfficerRole[]>>;
   escalation?: Partial<Record<EscalationRole, EscalationContact>>;
   wards: Ward[];
 };
-export type EscalationRole = 'commissioner' | 'sdo' | 'dc';
+export type { EscalationRole };
 export type EscalationContact = { title: string; name: string | null; email: string | null; phone: string | null; verified: boolean };
 type Boundary = { wardNumber: number; geometry: { type: string; coordinates: any } };
 
@@ -207,6 +218,9 @@ export function getEscalationContact(role: EscalationRole): EscalationContact | 
   return load().escalation?.[role];
 }
 
-export function getOfficerChain(): OfficerRole[] {
-  return load().officerChain ?? [];
+/** Chain of command for an office, top first, with names filled in from the escalation contacts where known. */
+export function getOfficerChain(route: Route = 'rmc'): OfficerRole[] {
+  const f = load();
+  const chain = (route === 'rmc' ? f.officerChain : f.officerChains?.[route]) ?? [];
+  return chain.map((o) => ({ ...o, name: o.name ?? (o.contact ? (f.escalation?.[o.contact]?.name ?? null) : null) }));
 }

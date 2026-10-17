@@ -7,6 +7,7 @@ import { fmtAgo } from '@/lib/format';
 import { Avatar, PartyTag, RecentList, StatTiles, SummaryBox, WorstWards } from '@/components/Accountability';
 import ShareButton from '@/components/ShareButton';
 import { UnverifiedBadge } from '@/components/ui';
+import { titleKey } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export default async function RepPage({ params }: { params: Promise<{ slug: stri
     r,
     sev: r.status === 'cleared' ? null : severity(r, now),
     title: `${t('ward.title', { n: r.ward! })}${getWard(r.ward!)?.name ? ` · ${getWard(r.ward!)!.name}` : ''}`,
-    sub: `${r.note ?? (r.category ? t(`cat.${r.category}`) : t('r.title'))} · ${fmtAgo(r.createdAt, lang, now)}`,
+    sub: `${r.note ?? (r.category ? t(`cat.${r.category}`) : t(titleKey(r.type)))} · ${fmtAgo(r.createdAt, lang, now)}`,
   }));
   const roleLabel = t(rep.role === 'MLA' ? 'role.mla' : rep.role === 'MP' ? 'role.mp' : 'role.mayor');
   const draft = rep.role === 'MLA' && !assemblyMappingVerified();

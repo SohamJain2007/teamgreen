@@ -2,12 +2,15 @@ import crypto from 'node:crypto';
 import { getDb } from './db';
 import { haversineM } from './geo';
 import { getWard, getWards } from './wards';
-import type { Category, Status, Zone } from './constants';
+import type { Category, ReportType, Road, Status, Zone } from './constants';
 import { DUPLICATE_RADIUS_M } from './constants';
 import { getStorage } from './storage';
 
 export type Report = {
   id: string;
+  type: ReportType;
+  /** Potholes only: who owns the road, which decides the office (see routeOf). */
+  road: Road | null;
   createdAt: number;
   lat: number;
   lng: number;
@@ -36,6 +39,8 @@ export type Report = {
 type Row = Record<string, any>;
 const toReport = (r: Row): Report => ({
   id: r.id,
+  type: r.type ?? 'garbage',
+  road: r.road ?? null,
   createdAt: r.created_at,
   lat: r.lat,
   lng: r.lng,
@@ -82,7 +87,8 @@ export function getReport(id: string): Report | null {
   return r ? toReport(r) : null;
 }
 
-export function nearbyOpen(lat: number, lng: number, radiusM = DUPLICATE_RADIUS_M) {
+/** Open reports of the same type near a point (a pothole next to a garbage dump is not a duplicate). */
+export function nearbyOpen(lat: number, lng: number, radiusM = DUPLICATE_RADIUS_M, type?: ReportType) {
   const dLat = radiusM / 111_000;
   const dLng = radiusM / (111_000 * Math.cos((lat * Math.PI) / 180));
   const rows = getDb()
@@ -93,12 +99,12 @@ export function nearbyOpen(lat: number, lng: number, radiusM = DUPLICATE_RADIUS_
     .all(lat - dLat, lat + dLat, lng - dLng, lng + dLng) as Row[];
   return rows
     .map((r) => ({ report: toReport(r), distanceM: haversineM(lat, lng, r.lat, r.lng) }))
-    .filter((x) => x.distanceM <= radiusM)
+    .filter((x) => x.distanceM <= radiusM && (!type || x.report.type === type))
     .sort((a, b) => a.distanceM - b.distanceM);
 }
 
 export function insertReport(r: {
-  id: string; createdAt: number; lat: number; lng: number; accuracy: number | null; locSource: 'gps' | 'pin';
+  id: string; type?: ReportType; road?: Road | null; createdAt: number; lat: number; lng: number; accuracy: number | null; locSource: 'gps' | 'pin';
   ward: number | null; wardAuto: boolean; category: Category | null; note: string | null;
   photo: string; thumb: string; status?: Status; afterPhoto?: string | null; afterThumb?: string | null;
   acknowledgedAt?: number | null; clearedAt?: number | null; upvotes?: number; isDemo?: boolean;
@@ -106,12 +112,12 @@ export function insertReport(r: {
 }) {
   getDb()
     .prepare(
-      `INSERT INTO reports (id, created_at, lat, lng, accuracy, loc_source, ward, ward_auto, category, note, status,
+      `INSERT INTO reports (id, type, road, created_at, lat, lng, accuracy, loc_source, ward, ward_auto, category, note, status,
         photo, thumb, after_photo, after_thumb, acknowledged_at, cleared_at, upvotes, is_demo, contact_email, contact_phone)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     )
     .run(
-      r.id, r.createdAt, r.lat, r.lng, r.accuracy, r.locSource, r.ward, r.wardAuto ? 1 : 0, r.category, r.note,
+      r.id, r.type ?? 'garbage', r.type === 'pothole' ? (r.road ?? null) : null, r.createdAt, r.lat, r.lng, r.accuracy, r.locSource, r.ward, r.wardAuto ? 1 : 0, r.category, r.note,
       r.status ?? 'reported', r.photo, r.thumb, r.afterPhoto ?? null, r.afterThumb ?? null,
       r.acknowledgedAt ?? null, r.clearedAt ?? null, r.upvotes ?? 1, r.isDemo ? 1 : 0, r.contactEmail ?? null, r.contactPhone ?? null,
     );
@@ -276,13 +282,16 @@ export async function clearDemo(): Promise<number> {
 
 // ---------- severity ----------
 export type Severity = 'critical' | 'moderate' | 'minor';
+const CRITICAL: readonly (Category | null)[] = ['burning', 'dead_animal', 'manhole', 'tree_cutting'];
+const MODERATE: readonly (Category | null)[] = ['drain', 'construction', 'road_broken', 'waterlogging', 'tree_cut', 'tree_lopping'];
 /**
- * How urgent an unresolved spot is, from how long it has been open, how many people have seen it and what it is.
- * critical: open 30+ days, 6+ people, or burning waste / dead animal; moderate: open 7+ days, 3+ people, drain or debris.
+ * How urgent an unresolved report is, from how long it has been open, how many people have seen it and what it is.
+ * critical: open 30+ days, 6+ people, or burning waste / dead animal / open manhole / a tree being cut right now;
+ * moderate: open 7+ days, 3+ people, a blocked drain, debris, a broken or flooded road, or a tree already cut or lopped.
  */
 export function severity(r: Report, now = Date.now()): Severity {
   const days = (now - r.createdAt) / DAY;
-  if (days >= 30 || r.upvotes >= 6 || r.category === 'burning' || r.category === 'dead_animal') return 'critical';
-  if (days >= 7 || r.upvotes >= 3 || r.category === 'drain' || r.category === 'construction') return 'moderate';
+  if (days >= 30 || r.upvotes >= 6 || CRITICAL.includes(r.category)) return 'critical';
+  if (days >= 7 || r.upvotes >= 3 || MODERATE.includes(r.category)) return 'moderate';
   return 'minor';
 }

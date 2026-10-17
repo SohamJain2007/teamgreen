@@ -166,6 +166,8 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string][] = [
   ['reports', 'reopen_flags', 'INTEGER NOT NULL DEFAULT 0'], // "still dirty" votes since the last clear
   ['reports', 'contact_email', 'TEXT'],            // reporter's, private: only used to tell them it was cleared
   ['reports', 'contact_phone', 'TEXT'],            // 10-digit Indian mobile, same
+  ['reports', 'type', "TEXT NOT NULL DEFAULT 'garbage'"], // garbage | pothole | tree
+  ['reports', 'road', 'TEXT'],                     // potholes only: lane | main | highway (decides the office)
   ['notifications', 'kind', "TEXT NOT NULL DEFAULT 'complaint'"], // see the notifications table
   ['notifications', 'role', 'TEXT'],
 ];

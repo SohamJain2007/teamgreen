@@ -3,10 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useT } from './I18n';
 import { compress, getPosition } from '@/lib/client-media';
-import type { Status } from '@/lib/constants';
+import type { ReportType, Status } from '@/lib/constants';
 
 type Props = {
   id: string;
+  type: ReportType;
+  /** Forest Department toll-free line, offered on tree-cutting reports instead of "Verify cleanup". */
+  forestPhone: string | null;
   upvotes: number;
   status: Status;
   verified: boolean;
@@ -87,7 +90,7 @@ export default function ReportActions(p: Props) {
       const r = await fetch(`/api/reports/${p.id}/clean`, { method: 'POST', body: fd }).catch(() => null);
       const d = r ? await r.json().catch(() => ({})) : {};
       if (r?.ok) {
-        setMsg({ ok: true, text: t('r.clean.done'), bar: true });
+        setMsg({ ok: true, text: t(pothole ? 'r.clean.done.pothole' : 'r.clean.done'), bar: true });
         router.refresh();
       } else setMsg({ ok: false, text: errText(d, r?.status ?? 0), bar: true });
     }
@@ -104,7 +107,11 @@ export default function ReportActions(p: Props) {
       if (r?.ok) {
         setDirtyVoted(true);
         remember('dirty');
-        setMsg({ ok: true, text: d.reopened ? t('r.dirty.reopened') : t('r.dirty.thanks', { n: p.reopenThreshold }), bar: true });
+        setMsg({
+          ok: true,
+          text: d.reopened ? t(pothole ? 'r.dirty.reopened.pothole' : 'r.dirty.reopened') : t(pothole ? 'r.dirty.thanks.pothole' : 'r.dirty.thanks', { n: p.reopenThreshold }),
+          bar: true,
+        });
         router.refresh();
       } else setMsg({ ok: false, text: errText(d, r?.status ?? 0), bar: true });
     }
@@ -121,6 +128,7 @@ export default function ReportActions(p: Props) {
 
   const confirmations = Math.max(0, upvotes - 1);
   const cleared = p.status === 'cleared';
+  const pothole = p.type === 'pothole';
 
   return (
     <>
@@ -157,14 +165,24 @@ export default function ReportActions(p: Props) {
           <input ref={cleanRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => markClean(e.target.files?.[0])} />
           {/* The cleanup / still-dirty action is the one we want people to take; flagging stays available but quiet. */}
           <div className="flex gap-2">
-            {cleared ? (
+            {p.type === 'tree' ? (
+              // Nobody can un-cut a tree, so instead of "verify cleanup" the main action is to alert the Forest Department.
+              !cleared && p.forestPhone ? (
+                <a href={`tel:${p.forestPhone.replace(/[^\d+]/g, '')}`} className="btn-primary flex-1">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2" /></svg>
+                  {t('btn.forestHelpline')}
+                </a>
+              ) : (
+                <p className="flex flex-1 items-center text-xs text-muted">{t('r.tree.officialOnly')}</p>
+              )
+            ) : cleared ? (
               <button onClick={stillDirty} disabled={dirtyVoted || busy != null} className="btn flex-1 bg-palash text-white hover:bg-palash-dark">
-                {busy === 'dirty' ? t('r.locating') : dirtyVoted ? t('r.dirty.voted') : t('r.dirty.btn')}
+                {busy === 'dirty' ? t('r.locating') : dirtyVoted ? t('r.dirty.voted') : t(pothole ? 'r.dirty.btn.pothole' : 'r.dirty.btn')}
               </button>
             ) : (
               <button onClick={() => cleanRef.current?.click()} disabled={busy != null} className="btn-primary flex-1">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16 10" /></svg>
-                {busy === 'clean' ? t('r.locating') : t('btn.verifyCleanup')}
+                {busy === 'clean' ? t('r.locating') : t(pothole ? 'btn.verifyRepair' : 'btn.verifyCleanup')}
               </button>
             )}
             <button

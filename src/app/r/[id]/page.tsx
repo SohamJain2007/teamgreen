@@ -8,12 +8,14 @@ import { getReport, listEvents, severity } from '@/lib/reports';
 import { complaintText, listNotifications, notifyMode, rmcEmail as getRmcEmail } from '@/lib/notify';
 import { assemblyMappingVerified, getMayor, getMp, getOfficerChain, getWard, getWardFile, mlaForWard } from '@/lib/wards';
 import { daysBetween, fmtDate, fmtAgo, fmtDuration, photoUrl } from '@/lib/format';
-import { DemoBadge, StatusBadge } from '@/components/ui';
+import { DemoBadge, StatusBadge, TypeTag } from '@/components/ui';
+import { statusKey, titleKey } from '@/lib/labels';
 import { AccountabilityChain, SEV_DOT, type Contact } from '@/components/Accountability';
 import ShareButton from '@/components/ShareButton';
 import ReportActions from '@/components/ReportActions';
 import MapView from '@/components/MapView';
-import { REOPEN_THRESHOLD, STATUSES, VERIFY_CONFIRMATIONS, VERIFY_RADIUS_M, type Status } from '@/lib/constants';
+import { REOPEN_THRESHOLD, STATUSES, VERIFY_CONFIRMATIONS, VERIFY_RADIUS_M, routeOf, type ReportType, type Status } from '@/lib/constants';
+import { translate } from '@/lib/translations';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const r = getReport(id);
   if (!r || r.hidden) return { title: 'Report not found' };
-  const title = `Garbage spot${r.ward ? `, Ward ${r.ward}` : ''}, Ranchi: ${r.status}`;
+  const title = `${translate('en', titleKey(r.type))}${r.ward ? `, Ward ${r.ward}` : ''}, Ranchi: ${translate('en', statusKey(r.status, r.type)).toLowerCase()}`;
   return { title, openGraph: { title, images: [photoUrl(r.photo)] }, twitter: { card: 'summary_large_image' } };
 }
 
@@ -46,7 +48,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
     { key: 'verified', label: t('step.verified'), at: r.verifiedAt, color: 'bg-jharna' },
     ...(notifyMode() !== 'off' || deliveries.length ? [{ key: 'sent', label: t('step.sent'), at: firstSent, color: 'bg-jharna' }] : []),
     { key: 'acknowledged', label: t('status.acknowledged'), at: r.acknowledgedAt, color: 'bg-haldi' },
-    { key: 'cleared', label: t('status.cleared'), at: r.clearedAt, color: 'bg-sal', note: r.clearedBy === 'citizen' ? t('r.clearedByCitizen') : undefined },
+    { key: 'cleared', label: t(statusKey('cleared', r.type)), at: r.clearedAt, color: 'bg-sal', note: r.clearedBy === 'citizen' ? t('r.clearedByCitizen') : undefined },
   ];
   const sev = r.status === 'cleared' ? null : severity(r, now);
   const mla = mlaForWard(ward);
@@ -64,9 +66,15 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
     t('bar.seen', { n: r.upvotes }),
     r.status === 'cleared' ? t('r.clearedIn', { n: daysOpen }) : t('bar.unresolved', { n: daysOpen }),
   ].join(' · ');
-  const statusLabels = Object.fromEntries(STATUSES.map((s) => [s, t(`status.${s}`)])) as Record<Status, string>;
+  const statusLabels = Object.fromEntries(STATUSES.map((s) => [s, t(statusKey(s, r.type))])) as Record<Status, string>;
   const gmaps = `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`;
-  const helpline = getWardFile().meta.rmcHelpline.phone;
+  const route = routeOf(r);
+  const meta = getWardFile().meta;
+  // The office's own line, to reach them directly as well.
+  const direct =
+    route === 'forest' ? { label: t('alsoForest'), phone: meta.forestHelpline?.phone }
+    : route === 'rcd' || route === 'nh' ? { label: t('alsoRcd'), phone: meta.rcdHelpline?.phone }
+    : { label: t('alsoRmc'), phone: meta.rmcHelpline.phone };
 
   return (
     <article className="mx-auto max-w-2xl space-y-5 pb-32">
@@ -88,15 +96,16 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
               <><span className="h-2.5 w-2.5 rounded-full bg-sal" aria-hidden="true" /><span className="text-sal-dark">{t('sev.resolved')}</span></>
             )}
           </p>
-          <ShareButton title={`Garbage spot #${r.id}, Ranchi`} label={t('r.share')} copiedLabel={t('r.copied')} />
+          <ShareButton title={`${t(titleKey(r.type))} #${r.id}, Ranchi`} label={t('r.share')} copiedLabel={t('r.copied')} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={r.status} />
+          <StatusBadge status={r.status} type={r.type} />
+          {r.type !== 'garbage' && <TypeTag type={r.type} />}
           {r.verifiedAt && <span className="rounded-full bg-jharna-soft px-2.5 py-1 text-xs font-bold text-jharna-dark">✓ {t('step.verified')}</span>}
           {r.isDemo && <DemoBadge />}
           <span className="font-mono text-xs text-muted">#{r.id}</span>
         </div>
-        <h1 className="text-3xl">{r.category ? t(`cat.${r.category}`) : t('r.title')}{ward ? `, ${t('ward.title', { n: ward.wardNumber })}` : ''}</h1>
+        <h1 className="text-3xl">{r.category ? t(`cat.${r.category}`) : t(titleKey(r.type))}{ward ? `, ${t('ward.title', { n: ward.wardNumber })}` : ''}</h1>
         <p className="text-muted" suppressHydrationWarning>
           {t('r.reportedOn', { when: fmtDate(r.createdAt, lang) })} ({fmtAgo(r.createdAt, lang, now)})
         </p>
@@ -105,6 +114,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
             ? t('r.clearedIn', { n: daysBetween(r.createdAt, r.clearedAt) })
             : t('r.daysOpen', { n: daysBetween(r.createdAt, now) })}
         </p>
+        {r.road && <p className="text-sm"><span className="text-muted">{t('r.road')}:</span> <strong>{t(`road.${r.road}`)}</strong></p>}
         {r.note && <p className="rounded-xl border-l-4 border-palash bg-white p-3">{r.note}</p>}
       </header>
 
@@ -182,6 +192,8 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
 
       <ReportActions
         id={r.id}
+        type={r.type}
+        forestPhone={meta.forestHelpline?.phone ?? null}
         upvotes={r.upvotes}
         status={r.status}
         verified={r.verifiedAt != null}
@@ -194,7 +206,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       <section aria-labelledby="loc">
         <h2 id="loc" className="section-title mb-2">{t('r.location')}</h2>
         <MapView
-          points={[{ id: r.id, lat: r.lat, lng: r.lng, status: r.status, thumb: r.thumb, label: r.category ? t(`cat.${r.category}`) : t('r.title'), sub: '' }]}
+          points={[{ id: r.id, lat: r.lat, lng: r.lng, status: r.status, thumb: r.thumb, label: r.category ? t(`cat.${r.category}`) : t(titleKey(r.type)), sub: '' }]}
           statusLabels={statusLabels}
           openLabel={t('tracker.open')}
           highlightId={r.id}
@@ -219,12 +231,13 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
         <h2 id="off" className="section-title mb-2">{t('acc.chain')}</h2>
         <AccountabilityChain
           t={t}
-          officers={getOfficerChain()}
+          officers={getOfficerChain(route)}
+          officersLabel={t(route === 'rmc' ? 'acc.chainOfficers' : `acc.chainOfficers.${route}`)}
           elected={elected}
           waText={complaintText(r)}
           draftNote={mla && !assemblyMappingVerified() ? t('acc.draftMap') : null}
         />
-        <p className="mt-2 text-xs text-muted">{t('alsoRmc')}: <a className="font-semibold underline" href={`tel:${helpline}`}>{helpline}</a></p>
+        {direct.phone && <p className="mt-2 text-xs text-muted">{direct.label}: <a className="font-semibold underline" href={`tel:${direct.phone}`}>{direct.phone}</a></p>}
       </section>
     </article>
   );

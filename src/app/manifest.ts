@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'SafaiRanchi',
     short_name: 'SafaiRanchi',
-    description: 'Report garbage black spots in Ranchi in 30 seconds and track them until they are cleared.',
+    description: 'Report garbage spots, potholes and tree cutting in Ranchi in 30 seconds and track them until they are fixed.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

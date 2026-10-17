@@ -1,4 +1,4 @@
-// Public-accountability building blocks: who is responsible for a garbage spot and how they are doing.
+// Public-accountability building blocks: who is responsible for a reported problem and how they are doing.
 // Server components; `t` comes from getT(). Contact menus use <details>, so no client JS is needed.
 import Link from 'next/link';
 import type { Key } from '@/lib/translations';
@@ -124,11 +124,11 @@ export type Contact = { name: string; role: string; party?: string | null; phone
 
 /** Officer chain (top to bottom) and the elected representatives for one ward. */
 export function AccountabilityChain({
-  t, officers, elected, waText, draftNote,
-}: { t: T; officers: OfficerRole[]; elected: Contact[]; waText: string; draftNote?: string | null }) {
+  t, officers, officersLabel, elected, waText, draftNote,
+}: { t: T; officers: OfficerRole[]; officersLabel?: string; elected: Contact[]; waText: string; draftNote?: string | null }) {
   return (
     <div className="card p-4">
-      <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-widest text-muted">{t('acc.chainOfficers')}</p>
+      <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-widest text-muted">{officersLabel ?? t('acc.chainOfficers')}</p>
       <ol className="flex flex-col items-center">
         {officers.map((o, i) => (
           <li key={o.role} className="flex flex-col items-center text-center">

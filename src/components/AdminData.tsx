@@ -277,34 +277,39 @@ export default function AdminData(p: AdminDataProps) {
       <section className="space-y-2">
         <h2 className="text-xl">{t('data.esc.title')}</h2>
         <p className="text-sm text-muted">{t('data.esc.sub')}</p>
-        <ul className="space-y-2">
-          {p.escalation.map((e) => (
-            <Editable
-              key={e.role}
-              dataKey={`escalation:${e.role}`}
-              title={e.title}
-              initial={{ name: e.name, email: e.email, phone: e.phone, verified: e.verified }}
-              edit={p.edits[`escalation:${e.role}`]}
-              fields={[
-                { name: 'name', label: 'data.f.personName', kind: 'text' },
-                { name: 'email', label: 'data.f.email', kind: 'email' },
-                { name: 'phone', label: 'data.f.mobile', kind: 'tel' },
-                { name: 'verified', label: 'data.f.verified', hint: 'data.f.verified.hint', kind: 'bool' },
-              ]}
-              summary={
-                <>
-                  <p className="flex flex-wrap items-center gap-1.5 font-semibold">
-                    {e.title}
-                    {e.verified ? <Badge tone="ok">{t('data.badge.checked')}</Badge> : <Badge tone="warn">{t('data.badge.unverified')}</Badge>}
-                    {!e.email && !e.phone && <Badge tone="bad">{t('data.badge.unreachable')}</Badge>}
-                    {p.edits[`escalation:${e.role}`] && <Badge tone="info">{t('data.badge.edited')}</Badge>}
-                  </p>
-                  <p className="text-sm text-muted">{contactLine(e.name, e.email, e.phone)}</p>
-                </>
-              }
-            />
-          ))}
-        </ul>
+        {(['rmc', 'rcd', 'nh', 'forest'] as const).map((g) => (
+          <div key={g} className="space-y-2">
+            <h3 className="pt-2 text-sm font-bold uppercase tracking-wide text-muted">{t(`data.esc.group.${g}`)}</h3>
+            <ul className="space-y-2">
+                {p.escalation.filter((e) => groupOf(e.role) === g).map((e) => (
+                  <Editable
+                    key={e.role}
+                    dataKey={`escalation:${e.role}`}
+                    title={e.title}
+                    initial={{ name: e.name, email: e.email, phone: e.phone, verified: e.verified }}
+                    edit={p.edits[`escalation:${e.role}`]}
+                    fields={[
+                      { name: 'name', label: 'data.f.personName', kind: 'text' },
+                      { name: 'email', label: 'data.f.email', kind: 'email' },
+                      { name: 'phone', label: 'data.f.mobile', kind: 'tel' },
+                      { name: 'verified', label: 'data.f.verified', hint: 'data.f.verified.hint', kind: 'bool' },
+                    ]}
+                    summary={
+                      <>
+                        <p className="flex flex-wrap items-center gap-1.5 font-semibold">
+                          {e.title}
+                          {e.verified ? <Badge tone="ok">{t('data.badge.checked')}</Badge> : <Badge tone="warn">{t('data.badge.unverified')}</Badge>}
+                          {!e.email && !e.phone && <Badge tone="bad">{t('data.badge.unreachable')}</Badge>}
+                          {p.edits[`escalation:${e.role}`] && <Badge tone="info">{t('data.badge.edited')}</Badge>}
+                        </p>
+                        <p className="text-sm text-muted">{contactLine(e.name, e.email, e.phone)}</p>
+                      </>
+                    }
+                  />
+                ))}
+            </ul>
+          </div>
+        ))}
       </section>
 
       <section className="space-y-2">
@@ -454,3 +459,7 @@ export default function AdminData(p: AdminDataProps) {
     </div>
   );
 }
+
+/** Which office's list an escalation contact belongs under. */
+const groupOf = (role: string) =>
+  role.startsWith('rcd_') ? 'rcd' : role.startsWith('nh_') ? 'nh' : role === 'dfo' || role === 'cf' || role === 'pccf' ? 'forest' : 'rmc';
